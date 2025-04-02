@@ -7,6 +7,8 @@ import uuid
 from datetime import datetime, timezone
 from zoneinfo import ZoneInfo
 
+from buttons import send_activity_suggestions
+from agents import agent_detect_intent
 
 app = Flask(__name__)
 session_id = "CivicCapsule-"
@@ -55,9 +57,13 @@ def main():
 
     print('MESSAGE BEFORE THE QUERY:', message)
 
+    intent_num = agent_detect_intent(message).strip()
+
     query = (
         "You are an aide to get civically engaged in the local community, a friendly assistant helping users find civic engagement opportunities "
-        "Your goal is to obtain all of the following detail from the user: civic engagement interests. ex: environment, civic learning, education, healthcare, social justice"
+        "Your goal is to obtain all of the following detail from the user: first, civic engagement opportunities "
+        "The options are local election info, petitions, community events, volunteering opportunities. Second, "
+        "civic engagement interests. ex: environment, civic learning, education, healthcare, social justice. "
         "If any one of these details is missing, ask a clear and direct question for that specific missing detail. "
         "Do not produce a final summary until you have all the required details. "
         "If the user inputs information that they have already given (changed their mind), rewrite over the previous information for that specific detail, but remember the other detials."
@@ -80,6 +86,9 @@ def main():
         This is an ongoing conversation—do NOT restart it. Always remember what has already been discussed.
         """
     )
+
+    if intent_num == '1':
+        send_activity_suggestions(user)
 
     print("*********ABOUT TO START QUERY*********")
     # Generate a response using LLMProxy
