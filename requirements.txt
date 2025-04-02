@@ -9,4 +9,3 @@ Werkzeug==2.2.2
 flask-session
 datetime
 selenium
-selenium webdriver-manager
