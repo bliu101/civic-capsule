@@ -96,14 +96,14 @@ def main():
     print("RESPONSE TEXT: ", response_text)
     print(sess_id)
 
-    # if "All necessary details completed" in response_text:
-    #     print("========DETAILS_COMPLETE STARTED========")
-    #     details_complete(room_id, response_text, user, sess_id)   
-    #     print("========DETAILS_COMPLETE COMMAND DONE========")     
-    #     return jsonify({"status": "details_complete"})
-    # else: 
-    #     print(response_text)
-    #     return jsonify({"text": response_text})
+    if "All necessary details completed" in response_text:
+        print("========DETAILS_COMPLETE STARTED========")
+        details_complete(room_id, response_text, user, sess_id)   
+        print("========DETAILS_COMPLETE COMMAND DONE========")     
+        return jsonify({"status": "details_complete"})
+    else: 
+        print(response_text)
+        return jsonify({"text": response_text})
 
 @app.errorhandler(404)
 def page_not_found(e):

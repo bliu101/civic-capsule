@@ -43,7 +43,7 @@ def scrape_moveon_petitions(keyword="boston"):
             description = petition.find_element(By.CSS_SELECTOR, "div.petition-why").text.strip()
             creator = petition.find_element(By.CSS_SELECTOR, "div.petition-creator span.name").text.strip()
             signature_info = petition.find_element(By.CSS_SELECTOR, "div.petition-signatures").text.strip()
-            
+                
             results.append({
                 "title": title,
                 "url": url,
