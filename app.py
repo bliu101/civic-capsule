@@ -24,11 +24,6 @@ HEADERS = {
     "X-User-Id": os.environ.get("RC_userId") #Replace with your bot user id for local testing or keep it and store secrets in Koyeb
 }
 
-upload_headers = {
-    "X-Auth-Token": os.environ.get("RC_token"),  #Replace with your bot token for local testing or keep it and store secrets in Koyeb
-    "X-User-Id": os.environ.get("RC_userId") #Replace with your bot user id for local testing or keep it and store secrets in Koyeb
-}
-
 @app.route('/', methods=['POST'])
 def hello_world():
    return jsonify({"text":'Hello from Koyeb - you reached the main page!'})
@@ -59,6 +54,10 @@ def main():
 
     intent_num = agent_detect_intent(message).strip()
 
+    if intent_num == '1':
+        send_activity_suggestions(user)
+        return
+
     query = (
         "You are an aide to get civically engaged in the local community, a friendly assistant helping users find civic engagement opportunities "
         "Your goal is to obtain all of the following detail from the user: first, civic engagement opportunities "
@@ -87,8 +86,6 @@ def main():
         """
     )
 
-    if intent_num == '1':
-        send_activity_suggestions(user)
 
     print("*********ABOUT TO START QUERY*********")
     # Generate a response using LLMProxy
@@ -107,7 +104,6 @@ def main():
 
     if "All necessary details completed" in response_text:
         print("========DETAILS_COMPLETE STARTED========")
-        details_complete(room_id, response_text, user, sess_id)   
         print("========DETAILS_COMPLETE COMMAND DONE========")     
         return jsonify({"status": "details_complete"})
     else: 

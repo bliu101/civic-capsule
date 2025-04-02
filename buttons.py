@@ -30,7 +30,7 @@ def send_activity_suggestions(user):
     
     payload = {
         "channel": f"@{user}",
-        "text": "Here are some civic engagement category suggestions for you:",
+        "text": "Hi there I am Civic Capsule! 😊 I'm here to help you find ways to get involved in your community. To get started, could you tell me what civic engagement opportunities you're interested in?",
         "attachments": [
             {
                 "text": "Please choose one of the following categories:",
