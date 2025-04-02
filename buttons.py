@@ -40,6 +40,8 @@ def send_activity_suggestions(user):
     }
     
     try:
+        print("Token:", os.environ.get("RC_token"))
+        print("User ID:", os.environ.get("RC_userId"))
         response = requests.post(ROCKETCHAT_URL, json=payload, headers=HEADERS)
         response.raise_for_status()
         print(f"Sent activity suggestion buttons to {user}.")
