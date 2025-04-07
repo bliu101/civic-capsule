@@ -104,6 +104,9 @@ def main():
         "Only when all details are provided, respond with exactly: 'All necessary details completed:' followed by a summary of the plan. "
         "Always remember what has been discussed, to revisit later or in case user changes activity."
         f"This is the user's next message: {message}"
+
+        "Do not ask for clarification for information that you have already received."
+
     )
     system = (
         """
@@ -117,9 +120,11 @@ def main():
         
         Please use emojis where appropriate.
         This is an ongoing conversation—do NOT restart it. Always remember what has already been discussed.
+
+        Do not ask for clarification for information that you have already received.
+
         """
     )
-
 
     print("*********ABOUT TO START QUERY*********")
     # Generate a response using LLMProxy
@@ -138,9 +143,9 @@ def main():
 
     if "All necessary details completed" in response_text:
         print("========DETAILS_COMPLETE STARTED========")
-        details_complete(room_id, response_text, user, sess_id)
-        print("========DETAILS_COMPLETE COMMAND DONE========")     
-        return jsonify({"text": response_text})
+        details_response = details_complete(room_id, response_text, user, sess_id)
+        print("========DETAILS_COMPLETE COMMAND DONE========")
+        return jsonify({"text": details_response})
     else: 
         print(response_text)
         return jsonify({"text": response_text})
