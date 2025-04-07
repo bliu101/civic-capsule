@@ -23,7 +23,7 @@ def send_activity_suggestions(user):
         actions.append({
             "type": "button",
             "text": f"{emoji} {suggestion.capitalize()}",
-            "msg": f"The activity category chosen is: {suggestion}",
+            "msg": f"!activity {suggestion}",
             "msg_in_chat_window": True,
             "style": "primary"  # Optional: use "primary", "danger", etc. if supported
         })
@@ -34,6 +34,45 @@ def send_activity_suggestions(user):
         "attachments": [
             {
                 "text": "Please choose one of the following categories:",
+                "actions": actions
+            }
+        ]
+    }
+    
+    try:
+        print("Token:", os.environ.get("RC_token"))
+        print("User ID:", os.environ.get("RC_userId"))
+        response = requests.post(ROCKETCHAT_URL, json=payload, headers=HEADERS)
+        response.raise_for_status()
+        print(f"Sent activity suggestion buttons to {user}.")
+        return response.json()
+    except Exception as e:
+        print(f"Error sending activity suggestions: {e}")
+        return {"error": f"Unexpected error: {e}"}
+
+def use_skills(user):
+    # Pair each suggestion with an emoji for a more visual presentation
+    suggestions = [
+        ("Yes", "✅"),
+        ("No", "❌"),
+    ]
+    
+    # Build the actions array with improved formatting and optional styling
+    actions = []
+    for idx, (suggestion, emoji) in enumerate(suggestions):
+        actions.append({
+            "type": "button",
+            "text": f"{emoji} {suggestion.capitalize()}",
+            "msg": f"!skills {suggestion}",
+            "msg_in_chat_window": True,
+            "style": "primary"  # Optional: use "primary", "danger", etc. if supported
+        })
+    
+    payload = {
+        "channel": f"@{user}",
+        "text": "Would you like to use any relevant job/hobby skills in your volunteering",
+        "attachments": [
+            {
                 "actions": actions
             }
         ]

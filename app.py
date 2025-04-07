@@ -9,6 +9,7 @@ from zoneinfo import ZoneInfo
 
 from buttons import send_activity_suggestions
 from agents import agent_detect_intent
+from commands import activity_command
 
 from dotenv import load_dotenv
 from pymongo import MongoClient
@@ -79,11 +80,14 @@ def main():
     if data.get("bot") or not message:
         return jsonify({"status": "ignored"})
 
+    if message.startswith('!activity')
+        activity_command(message, user)
+
+
     print(f"Message from {user} : {message}")
     
     print("message length", len(message.split()[0]) == 1)
     print(message.split())
-
 
     print('MESSAGE BEFORE THE QUERY:', message)
 
