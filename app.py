@@ -24,6 +24,11 @@ HEADERS = {
     "X-User-Id": os.environ.get("RC_userId") #Replace with your bot user id for local testing or keep it and store secrets in Koyeb
 }
 
+CIVIC_ENGAGEMENT = "1831"
+ENVIRONMENT = "1156"
+SOCIAL_GOOD = "186"
+LEARNINGS_AND_LECTURES = "166"
+
 @app.route('/', methods=['POST'])
 def hello_world():
    return jsonify({"text":'Hello from Koyeb - you reached the main page!'})
