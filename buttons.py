@@ -23,7 +23,7 @@ def send_activity_suggestions(user):
         actions.append({
             "type": "button",
             "text": f"{emoji} {suggestion.capitalize()}",
-            "msg": f"!activity {suggestion}",
+            "msg": f"The activity category chosen is: {suggestion}",
             "msg_in_chat_window": True,
             "style": "primary"  # Optional: use "primary", "danger", etc. if supported
         })

@@ -8,8 +8,10 @@ def activity_command(message, user):
         print("Local Elections")
     if content == 'petitions':
         print("Petitions")
+        
     if content == 'community events':
         print("Community Events")
+
     if content == 'volunteering opportunities':
         print("Volunteering Opportunities")
         use_skills(user)

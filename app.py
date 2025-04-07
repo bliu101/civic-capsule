@@ -80,8 +80,8 @@ def main():
     if data.get("bot") or not message:
         return jsonify({"status": "ignored"})
 
-    if message.startswith('!activity')
-        activity_command(message, user)
+    # if message.startswith('!activity'):
+    #     activity_command(message, user)
 
 
     print(f"Message from {user} : {message}")
@@ -141,13 +141,8 @@ def main():
     print("RESPONSE TEXT: ", response_text)
     print(sess_id)
 
-    if "All necessary details completed" in response_text:
-        print("========DETAILS_COMPLETE STARTED========")
-        print("========DETAILS_COMPLETE COMMAND DONE========")     
-        return jsonify({"status": "details_complete"})
-    else: 
-        print(response_text)
-        return jsonify({"text": response_text})
+    print(response_text)
+    return jsonify({"text": response_text})
 
 @app.errorhandler(404)
 def page_not_found(e):
