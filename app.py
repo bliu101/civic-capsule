@@ -21,9 +21,6 @@ DB_NAME = os.getenv("DB_NAME", "rocketchat")
 client = MongoClient(MONGO_URI)
 db = client[DB_NAME]
 
-def get_users_collection():
-    return db["users"]
-
 app = Flask(__name__)
 session_id = "CivicCapsule-"
 
@@ -43,6 +40,9 @@ ENVIRONMENT = "1156"
 SOCIAL_GOOD = "186"
 LEARNINGS_AND_LECTURES = "166"
 
+def get_users_collection():
+    return db["users"]
+
 @app.route('/', methods=['POST'])
 def hello_world():
    return jsonify({"text":'Hello from Koyeb - you reached the main page!'})
@@ -60,16 +60,20 @@ def main():
     sess_id = session_id + user
     now = datetime.utcnow()
 
-    user_info = users_collection.update_one(
-        {"roomId": room_id},
-        {
-            "$setOnInsert": {"firstSeen": now},
-            "$set": {"lastSeen": now, "username": user},
-        },
-        upsert=True
-    )
+    try:
+        user_info = users_collection.update_one(
+            {"roomId": room_id},
+            {
+                "$setOnInsert": {"firstSeen": now},
+                "$set": {"lastSeen": now, "username": user},
+            },
+            upsert=True
+        )
+    except Exception as e:
+        print("MongoDB error:", str(e))
+        return jsonify({"error": "DB write failed"}), 500
 
-    print(data)
+        print(data)
 
     # Ignore bot messages
     if data.get("bot") or not message:
