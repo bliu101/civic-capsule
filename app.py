@@ -8,7 +8,7 @@ from datetime import datetime, timezone
 from zoneinfo import ZoneInfo
 
 from buttons import send_activity_suggestions
-from agents import agent_detect_intent
+from agents import agent_detect_intent, agent_interest_category, agent_civic_category
 from commands import activity_command
 
 from dotenv import load_dotenv
@@ -21,6 +21,8 @@ DB_NAME = os.getenv("DB_NAME", "rocketchat")
 
 client = MongoClient(MONGO_URI)
 db = client[DB_NAME]
+petitions_collection = db["moveon_petitions"]
+community_collection = db["events"]
 
 app = Flask(__name__)
 session_id = "CivicCapsule-"
@@ -84,13 +86,6 @@ def main():
     #     activity_command(message, user)
 
 
-    print(f"Message from {user} : {message}")
-    
-    print("message length", len(message.split()[0]) == 1)
-    print(message.split())
-
-    print('MESSAGE BEFORE THE QUERY:', message)
-
     intent_num = agent_detect_intent(message).strip()
 
     if intent_num == '1':
@@ -141,8 +136,66 @@ def main():
     print("RESPONSE TEXT: ", response_text)
     print(sess_id)
 
+    if "All necessary details completed" in response_text:
+        print("========DETAILS_COMPLETE STARTED========")
+        details_complete(room_id, response_text, user, sess_id)
+        print("========DETAILS_COMPLETE COMMAND DONE========")     
+        return jsonify({"status": "details_complete"})
+    else: 
+        print(response_text)
+        return jsonify({"text": response_text})
+
+
+def details_complete(room_id, response_text, user, sess_id):
+    """
+    Called when all necessary details have been provided.
+    """
+    print("ALL NECESSARY DETAILS")
+    civic_event = agent_civic_category(response_text) # election, volunteering, community, petitions''''''
+    category = agent_interest_category(response_text)
+
+    payload_initial = {
+        "channel": f"@{user}",
+        "text": "🔍 Gathering details... Hang tight while I search for opportunities!",
+    }
+    requests.post(ROCKETCHAT_URL, json=payload_initial, headers=HEADERS)
+
+    matching_results = None
+
+    if civic_event == 'petitions':
+        matching_results = list(petitions_collection.find({
+            "categories": category
+        }).limit(5))
+
+    if civic_event == 'community':
+        matching_results = list(community_collection.find({
+            "categories": category
+        }).limit(5))
+        
+    query = (
+        f'''
+        Here is information {matching_results} of the matching civic engagement opportunities.
+        Print it out in a readable way.
+        '''
+    )
+
+    system_prompt = """
+    Be friendly and give human readable text. Remember the output of this query for future reference..
+    """
+
+    response = generate(
+        model='4o-mini',
+        system=system_prompt,
+        query=query,
+        temperature=0.0,
+        lastk=1,
+        session_id=sess_id,
+    )
+
+    response_text = response.get('response', '').strip()
     print(response_text)
     return jsonify({"text": response_text})
+
 
 @app.errorhandler(404)
 def page_not_found(e):
