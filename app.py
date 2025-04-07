@@ -140,7 +140,7 @@ def main():
         print("========DETAILS_COMPLETE STARTED========")
         details_complete(room_id, response_text, user, sess_id)
         print("========DETAILS_COMPLETE COMMAND DONE========")     
-        return jsonify({"status": "details_complete"})
+        return jsonify({"text": response_text})
     else: 
         print(response_text)
         return jsonify({"text": response_text})
@@ -180,7 +180,8 @@ def details_complete(room_id, response_text, user, sess_id):
     )
 
     system_prompt = """
-    Be friendly and give human readable text. Remember the output of this query for future reference..
+    Be friendly and give human readable text. Remember the output of this query for future reference.
+    Add emojis where appropriate.
     """
 
     response = generate(
@@ -194,7 +195,7 @@ def details_complete(room_id, response_text, user, sess_id):
 
     response_text = response.get('response', '').strip()
     print(response_text)
-    return jsonify({"text": response_text})
+    return response_text
 
 
 @app.errorhandler(404)
