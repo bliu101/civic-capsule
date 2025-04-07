@@ -10,6 +10,11 @@ from zoneinfo import ZoneInfo
 from buttons import send_activity_suggestions
 from agents import agent_detect_intent
 
+from dotenv import load_dotenv
+from mongo import get_users_collection
+
+load_dotenv()
+
 app = Flask(__name__)
 session_id = "CivicCapsule-"
 
@@ -35,6 +40,8 @@ def hello_world():
 
 @app.route('/query', methods=['POST'])
 def main():
+    users_collection = get_users_collection()
+
     data = request.get_json() 
     room_id = data.get("channel_id", "")
 
@@ -42,6 +49,16 @@ def main():
     user = data.get("user_name", "Unknown")
     message = data.get("text", "")
     sess_id = session_id + user
+    now = datetime.utcnow()
+
+    user_info = users_collection.update_one(
+        {"roomId": room_id},
+        {
+            "$setOnInsert": {"firstSeen": now},
+            "$set": {"lastSeen": now, "username": user},
+        },
+        upsert=True
+    )
 
     print(data)
 

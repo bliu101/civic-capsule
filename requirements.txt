@@ -9,3 +9,5 @@ Werkzeug==2.2.2
 flask-session
 datetime
 selenium
+pymongo
+python-dotenv
