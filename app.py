@@ -11,9 +11,18 @@ from buttons import send_activity_suggestions
 from agents import agent_detect_intent
 
 from dotenv import load_dotenv
-from mongo import get_users_collection
+from pymongo import MongoClient
 
 load_dotenv()
+
+MONGO_URI = os.getenv("MONGODB_URI")
+DB_NAME = os.getenv("DB_NAME", "rocketchat")
+
+client = MongoClient(MONGO_URI)
+db = client[DB_NAME]
+
+def get_users_collection():
+    return db["users"]
 
 app = Flask(__name__)
 session_id = "CivicCapsule-"
