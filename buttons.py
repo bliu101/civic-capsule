@@ -92,11 +92,11 @@ def use_skills(user):
 def send_place_options(num, username, text):
     """Send a message with the place options as buttons."""
     actions = []
-    for n in range(num):
+    for n in range(1,num):
         print('IN THE FOR LOOPS FOR OPTIONS')
         actions.append({
             "type": "button",
-            "text": "n",
+            "text": f"{n}",
             "msg": f"!place {n}",
             "msg_in_chat_window": True,
             "style": "primary"

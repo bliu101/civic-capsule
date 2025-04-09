@@ -203,7 +203,7 @@ def details_complete(room_id, response_text, user, sess_id):
     num_options = 5 #agent_determine_number(response_text)
     send_place_options(num_options, user, response_text)
 
-    return response_text
+    # return response_text
 
 
 @app.errorhandler(404)
