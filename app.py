@@ -150,6 +150,40 @@ def main():
         print(response_text)
         return jsonify({"text": response_text})
 
+def send_place_options(num, username, text):
+    """Send a message with the place options as buttons."""
+    print(options)
+    actions = []
+    for n in range(num):
+        print('IN THE FOR LOOPS FOR OPTIONS')
+        actions.append({
+            "type": "button",
+            "text": n,
+            "msg": f"!place {n}",
+            "msg_in_chat_window": True,
+            "style": "primary"
+        })
+
+    payload = {
+        "channel": f"@{username}",
+        "text": text,
+        "attachments": [
+            {
+                "text": "Which option do you like?",
+                "actions": actions
+            }
+        ]
+    }
+
+    try:
+        response = requests.post(ROCKETCHAT_URL, json=payload, headers=HEADERS)
+        response.raise_for_status()
+        print(f"Message with buttons sent to {username}.")
+        return response.json()
+    except Exception as e:
+        print(f"An unexpected error occurred while sending message to {username}: {e}")
+        return {"error": f"Unexpected error: {e}"}
+
 
 def details_complete(room_id, response_text, user, sess_id):
     """
