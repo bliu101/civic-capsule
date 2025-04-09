@@ -154,7 +154,7 @@ def details_complete(room_id, response_text, user, sess_id):
     """
     Called when all necessary details have been provided.
     """
-    print("ALL NECESSARY DETAILS")
+    print("ALL NECESSARY DETAILS!!!!!!!")
     civic_event = agent_civic_category(response_text) # election, volunteering, community, petitions''''''
     category = agent_interest_category(response_text)
 
