@@ -96,7 +96,7 @@ def send_place_options(num, username, text):
         print('IN THE FOR LOOPS FOR OPTIONS')
         actions.append({
             "type": "button",
-            "text": n,
+            "text": "n",
             "msg": f"!place {n}",
             "msg_in_chat_window": True,
             "style": "primary"
