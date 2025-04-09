@@ -152,7 +152,6 @@ def main():
 
 def send_place_options(num, username, text):
     """Send a message with the place options as buttons."""
-    print(options)
     actions = []
     for n in range(num):
         print('IN THE FOR LOOPS FOR OPTIONS')
