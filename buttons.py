@@ -92,7 +92,7 @@ def use_skills(user):
 def send_place_options(num, username, text):
     """Send a message with the place options as buttons."""
     actions = []
-    for n in range(1,num):
+    for n in range(1, num + 1):
         print('IN THE FOR LOOPS FOR OPTIONS')
         actions.append({
             "type": "button",
