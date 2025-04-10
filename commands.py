@@ -8,7 +8,7 @@ def activity_command(message, user):
         print("Local Elections")
     if content == 'petitions':
         print("Petitions")
-        
+
     if content == 'community events':
         print("Community Events")
 
