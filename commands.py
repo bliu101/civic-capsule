@@ -1,5 +1,17 @@
 from llmproxy import generate, pdf_upload
 from buttons import use_skills
+import requests
+
+# Rocket.Chat API endpoint
+API_BASE_URL = "https://chat.genaiconnect.net/api/v1"
+ROCKETCHAT_URL = "https://chat.genaiconnect.net/api/v1/chat.postMessage"
+
+# Headers with authentication tokens stored securely in environment variables
+HEADERS = {
+    "Content-Type": "application/json",
+    "X-Auth-Token": os.environ.get("RC_token"),  #Replace with your bot token for local testing or keep it and store secrets in Koyeb
+    "X-User-Id": os.environ.get("RC_userId") #Replace with your bot user id for local testing or keep it and store secrets in Koyeb
+}
 
 def activity_command(message, user, sess_id):
     parts = message.split()

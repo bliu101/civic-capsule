@@ -90,11 +90,11 @@ def main():
 
     if message.startswith("!place"):
         print("========HANDLE_SHOW_MORE START========")
-        response_text = activity_command(message, user, sess_id)
+        activity_command(message, user, sess_id)
         
         print("========HANDLE_SHOW_MORE DONE========")
-        return jsonify({"text": response_text})
-        # return jsonify({"status": "show_more_handled"})
+        # return jsonify({"text": response_text})
+        return jsonify({"status": "show_more_handled"})
 
     if intent_num == '1':
         send_activity_suggestions(user)
