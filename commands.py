@@ -14,7 +14,7 @@ HEADERS = {
     "X-User-Id": os.environ.get("RC_userId") #Replace with your bot user id for local testing or keep it and store secrets in Koyeb
 }
 
-def activity_command(message, user, sess_id):
+def activity_command(message, user, sess_id, room_id):
     parts = message.split()
     place = parts[1]
     number = parts[2]
@@ -23,7 +23,7 @@ def activity_command(message, user, sess_id):
         system = 'Give human readable text and be friendly',
         query = (
             f"""There is a previously generated API list of petitions.
-            The user selected the #{place} place from that list.
+            The user selected the #{number} place from that list.
             Please provide a detailed, human-readable summary of this event."""                    
         ),
         # Please provide a detailed, human-readable summary of this activity or place, including key details such as location, features, and highlights.

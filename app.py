@@ -102,7 +102,7 @@ def main():
 
     if message.startswith("!place"):
         print("========HANDLE_SHOW_MORE START========")
-        activity_command(message, user, sess_id)
+        activity_command(message, user, sess_id, room_id=room_id)
         
         print("========HANDLE_SHOW_MORE DONE========")
         # return jsonify({"text": response_text})
