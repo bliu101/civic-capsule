@@ -32,7 +32,7 @@ def activity_command(message, user, sess_id, room_id):
     parts = message.split()
     place = parts[1]
     number = parts[2]
-    event_title = parts[3]
+    event_title = parts[3] if len(parts) > 3 else None
 
     response = generate(
         model = '4o-mini',
