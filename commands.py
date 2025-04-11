@@ -94,17 +94,18 @@ def activity_command(message, user, sess_id, room_id):
         except Exception as e:
             return {"error": f"Unexpected error: {e}"}
 
-        print("Resolved event ID:", result_id)
+        print("Result ID:", result_id)
         event_id = ObjectId(result_id)
+        print("Resolved event ID:", event_id)
 
-        selected_event = list(event_signups_collection.find({
-            "_id": event_id
-        }).limit(1))
+        # selected_event = list(event_signups_collection.find({
+        #     "_id": event_id
+        # }).limit(1))
 
-        if not selected_event:
-            print(f"No event found with ID: {event_id}")
+        # if not selected_event:
+        #     print(f"No event found with ID: {event_id}")
 
-        print(f"Adding user {room_id} to event signups for event")
+        # print(f"Adding user {room_id} to event signups for event")
 
         event_signups_collection.update_one(
             {"event_id": event_id},
