@@ -12,6 +12,8 @@ DB_NAME = os.environ.get("DB_NAME", "rocketchat")
 client = MongoClient(MONGO_URI)
 db = client[DB_NAME]
 event_signups_collection = db["event_signups"]
+community_collection = db["events"]
+
 
 # Rocket.Chat API endpoint
 API_BASE_URL = "https://chat.genaiconnect.net/api/v1"
@@ -54,7 +56,7 @@ def activity_command(message, user, sess_id, room_id):
                     "text": "Please click the link and sign the petition! Would you like to send this petition to other users?",
                     "actions": [
                         {
-                            "type": "button",
+                            "type": "button", 
                             "text": "✅ Yes",
                             "msg": f"!confirm {user} yes",
                             "msg_in_chat_window": True
@@ -208,21 +210,7 @@ def send_plan_to_friend(friend_username, username, plan_text):
         "text": plan_text,
         "attachments": [
             {
-                "text": "Do you like this plan?",
-                "actions": [
-                    {
-                        "type": "button",
-                        "text": "✅ Yes",
-                        "msg": f"!final {username} {friend_username} yes",
-                        "msg_in_chat_window": True
-                    },
-                    {
-                        "type": "button",
-                        "text": "❌ No",
-                        "msg": f"!final {username} {friend_username} no",
-                        "msg_in_chat_window": True
-                    }
-                ]
+                "text": f"{username} Signed this petition, and think you would also like to! Please take a look ☺️",
             }
         ]
     }

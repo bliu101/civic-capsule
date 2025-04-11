@@ -89,7 +89,7 @@ def main():
     if (len(message.split()) == 1) and is_valid_username(message.split()[0]):
         payload_initial = {
             "channel": f"@{user}",
-            "text": f"🕣 Waiting on {message.split()[0]}'s response",
+            "text": f"Sent the petition to {message.split()[0]}! Feel free to ask me for another civic engagement opportunity.",
         }
         requests.post(ROCKETCHAT_URL, json=payload_initial, headers=HEADERS)
         print("========REGENERATE_SUMMARY START========")
