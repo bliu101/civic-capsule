@@ -48,7 +48,38 @@ def agent_interest_category(message):
             Return "".
         
         If their chosen civic engagement opportunity is "volunteering opportunities":
-            Return "".
+            The categories are:
+            "Advocacy & Human Rights",
+            "Animals",
+            "Arts & Culture",
+            "Board Development",
+            "Children & Youth",
+            "Community",
+            "Computers & Technology",
+            "Crisis Support",
+            "Disaster Relief",
+            "Education & Literacy",
+            "Emergency & Safety",
+            "Employment",
+            "Environment",
+            "Faith-Based",
+            "Health & Medicine",
+            "Homeless & Housing",
+            "Hunger",
+            "Immigrants & Refugees",
+            "International",
+            "Justice & Legal",
+            "LGBTQ+",
+            "Media & Broadcasting",
+            "People with Disabilities",
+            "Politics",
+            "Race & Ethnicity",
+            "Seniors",
+            "Sports & Recreation",
+            "Veterans & Military",
+            "Families",
+            "Women"
+            Respond **only** with the exact category name from the above. Do not add any extra text.
 
         If their chosen civic engagement opportunity is "community events":
             The categories are:
