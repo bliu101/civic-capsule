@@ -81,21 +81,28 @@ def activity_command(message, user, sess_id, room_id):
             return {"error": f"Unexpected error: {e}"}
     
     if place == "events":
-        # Get the list of matching events stored from previous message (you could store this in session)
-        # For now, query events sorted by some consistent order
+        print("User selected 'events'")
+
         try:
             number_int = int(number) - 1
+            print(f"Parsed number: {number_int + 1}")
+
             event_list = list(community_collection.find({"category": {"$exists": True}}).limit(10))
+            print(f"Fetched {len(event_list)} events from the database")
+
             selected_event = event_list[number_int]
+            event_id = selected_event["_id"]
+            event_title = selected_event["title"]
+            print(f"Selected event: {event_title} (ID: {event_id})")
+
         except Exception as e:
+            print(f"Error selecting event: {e}")
             return {"error": f"Couldn't find selected event: {e}"}
 
-        event_id = selected_event["_id"]
-        event_title = selected_event["title"]
-        room_id = f"@{user}"  # or pass this in from the POST payload for accuracy
+        room_id = f"@{user}"  # You can update this if actual room ID is available
+        print(f"Adding user {room_id} to event signups")
 
-        # Add user to the event_signups list
-        event_signups_collection.update_one(
+        result = event_signups_collection.update_one(
             {"event_id": event_id},
             {
                 "$setOnInsert": {"title": event_title},
@@ -103,24 +110,36 @@ def activity_command(message, user, sess_id, room_id):
             },
             upsert=True
         )
+        print("Signup update complete:", result.raw_result)
 
-        # Notify others
         doc = event_signups_collection.find_one({"event_id": event_id})
         other_users = [rid for rid in doc["joined_users"] if rid != room_id]
+        print(f"Found {len(other_users)} other users to notify")
 
         for other_room in other_users:
+            print(f"Notifying {other_room} about new signup")
             notification = {
                 "channel": other_room,
-                "text": f"👋 {user} just joined **{event_title}**. You’re not alone!"
+                "text": f"{user} just joined {event_title}. You’re not alone!"
             }
-            requests.post(ROCKETCHAT_URL, json=notification, headers=HEADERS)
-
-        # Confirm to user
+            try:
+                # Send the message with buttons to Rocket.Chat
+                response = requests.post(ROCKETCHAT_URL, json=notification, headers=HEADERS)
+                response.raise_for_status()  # Raise an exception for HTTP errors (4xx, 5xx)
+                return response.json()  # Return the JSON response if successful
+            except Exception as e:
+                # Handle any other unexpected errors
+                return {"error": f"Unexpected error: {e}"}
+                
         confirmation = {
             "channel": room_id,
-            "text": f"✅ You’ve joined **{event_title}**!\nWe’ll let others know you’re coming too 😊"
+            "text": f"You’ve joined {event_title}. We'll let others know you're attending."
         }
+        print(f"Sending confirmation to {room_id}")
         requests.post(ROCKETCHAT_URL, json=confirmation, headers=HEADERS)
+
+        return
+
 
 
 def confirm_command(message, user, room_id):
