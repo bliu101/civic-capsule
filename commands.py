@@ -140,7 +140,6 @@ def activity_command(message, user, sess_id, room_id):
                 # Send the message with buttons to Rocket.Chat
                 response = requests.post(ROCKETCHAT_URL, json=notification, headers=HEADERS)
                 response.raise_for_status()  # Raise an exception for HTTP errors (4xx, 5xx)
-                return response.json()  # Return the JSON response if successful
             except Exception as e:
                 # Handle any other unexpected errors
                 return {"error": f"Unexpected error: {e}"}
@@ -150,7 +149,14 @@ def activity_command(message, user, sess_id, room_id):
             "text": f"You’ve joined {event_title}. We'll let others know you're attending."
         }
         print(f"Sending confirmation to {room_id}")
-        requests.post(ROCKETCHAT_URL, json=confirmation, headers=HEADERS)
+        try:
+            response = requests.post(ROCKETCHAT_URL, json=confirmation, headers=HEADERS)
+            response.raise_for_status()
+            print("Confirmation sent.")
+            return response.json()
+        except Exception as e:
+            print(f"Error sending confirmation: {e}")
+            return {"error": f"Unexpected error: {e}"}
 
         return
 
