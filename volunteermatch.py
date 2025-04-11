@@ -1,126 +1,138 @@
-from selenium import webdriver
-from selenium.webdriver.common.by import By
-from selenium.webdriver.chrome.service import Service
-from webdriver_manager.chrome import ChromeDriverManager
-from selenium.webdriver.chrome.options import Options
-from selenium.webdriver.support.ui import WebDriverWait
-from selenium.webdriver.support import expected_conditions as EC
-import time
-import os
-from dotenv import load_dotenv
-from pymongo import MongoClient
+# import time
+# import requests
+# from selenium import webdriver
+# from selenium.webdriver.common.by import By
+# from bs4 import BeautifulSoup
 
-from bs4 import BeautifulSoup
-import requests
+# def scrape_volunteer():
+#     # Setup selenium webdriver (make sure you have chromedriver installed)
+#     options = webdriver.ChromeOptions()
+#     options.add_argument('--headless')  # Running in headless mode for scraping without GUI
+#     driver = webdriver.Chrome(options=options)
 
-load_dotenv()
+#     # Define the URL of the site to scrape
+#     url = "https://www.volunteermatch.org/search/?l=Boston,%20MA,%20USA"
 
-MONGO_URI = os.getenv("MONGODB_URI")
-DB_NAME = os.getenv("DB_NAME", "rocketchat")
+#     # Navigate to the page
+#     driver.get(url)
+#     time.sleep(5)  # Allow the page to fully load
 
-client = MongoClient(MONGO_URI)
-db = client[DB_NAME]
-collection = db["volunteering"]
+#     # Scroll down to load more opportunities (if needed)
+#     # You can adjust the number of times the page scrolls for more results
+#     for _ in range(3):  # Scroll 3 times (adjust as necessary)
+#         driver.execute_script("window.scrollBy(0, 1000);")
+#         time.sleep(2)
 
-# def soup():
-#     url = 'https://www.volunteermatch.org/search?l=Boston%2C+MA%2C+USA'
-#     headers = {'User-Agent': 'Mozilla/5.0'}
+#     # Parse the page source with BeautifulSoup
+#     soup = BeautifulSoup(driver.page_source, 'html.parser')
 
-#     response = requests.get(url, headers=headers)
-#     soup = BeautifulSoup(response.content, 'html.parser')
+#     # Find all opportunities (list items with volunteering opportunities)
+#     opportunities = soup.find_all('li')
+#     print("OPPORTUNITIES? ", opportunities)
 
-#     # Find all opportunity items
-#     opportunities = soup.find_all('li', class_='pub-srp-opps__opp')
+#     # Create a list to hold the scraped data
+#     data = []
 
-#     print(f'Found {len(opportunities)} opportunities.')
+#     # Loop through each opportunity and extract relevant information
 #     for opp in opportunities:
-#         title_tag = opp.find('a', class_='pub-srp-opps__title')
-#         title = title_tag.get_text(strip=True) if title_tag else 'No Title'
-#         link = 'https://www.volunteermatch.org' + title_tag['href'] if title_tag and title_tag.get('href') else 'No Link'
+#         opp_id = opp.get('id', '')
+#         title = opp.find('a', class_='pub-srp-opps__title').text.strip()
+#         link = 'https://www.volunteermatch.org' + opp.find('a', class_='pub-srp-opps__title')['href']
+#         org_name = opp.find('a', class_='blue-drk').text.strip()
+#         location = opp.find('div', class_='pub-srp-opps__loc').text.strip()
+#         description = opp.find('p', class_='pub-srp-opps__desc').text.strip()
+#         date_posted = opp.find('div', class_='pub-srp-opps__posted').text.strip()
 
-#         desc_tag = opp.find('p', class_='pub-srp-opps__desc')
-#         desc = desc_tag.get_text(strip=True) if desc_tag else 'No Description'
+#         # Create a dictionary for each opportunity
+#         opportunity = {
+#             'id': opp_id,
+#             'title': title,
+#             'link': link,
+#             'organization': org_name,
+#             'location': location,
+#             'description': description,
+#             'date_posted': date_posted
+#         }
 
-#         org_tag = opp.find('div', class_='pub-srp-opps__org')
-#         org = org_tag.get_text(strip=True).replace('Organization:', '') if org_tag else 'No Organization'
+#         # Add this opportunity to the data list
+#         data.append(opportunity)
 
-#         print(f'Title: {title}\nOrganization: {org}\nLink: {link}\nDescription: {desc[:100]}...\n')
+#     # Close the browser once done
+#     driver.quit()
 
-def scrape_volunteering():
-    chrome_options = Options()
-    chrome_options.add_argument("--headless")
-    chrome_options.add_argument("--no-sandbox")
-    chrome_options.add_argument("--disable-dev-shm-usage")
+#     # Print the data or upload it to a database
+#     for opp in data:
+#         print(opp)
 
-    driver = webdriver.Chrome(service=Service(ChromeDriverManager().install()), options=chrome_options)
-    wait = WebDriverWait(driver, 10)
+# # You can also save this data to a database, for example:
+# # 1. Connect to your MongoDB or SQL database.
+# # 2. Insert each opportunity into the respective table/collection.
 
-    # Wait for search results to load
-    time.sleep(3)
+# if __name__ == "__main__":
+#     results = scrape_volunteer()
 
-    base_url = "https://www.volunteermatch.org/search/?l=Boston%2C+MA%2C+USA&v=true"
-    all_data = []
+#     # if results:
+#     #     save_petitions_to_mongo(results)
 
-    for page_num in range(1, 6):  # Pages 1 through 5
-        url = f"{base_url}&p={page_num}"
-        print(f"🌐 Scraping page {page_num}: {url}")
-        driver.get(url)
-        time.sleep(3)  # Allow page to load
+import requests
+from bs4 import BeautifulSoup
 
+BASE_URL = "https://www.volunteermatch.org"
+SEARCH_URL = f"{BASE_URL}/search/?l=Boston,%20MA,%20USA"
+
+headers = {
+    "User-Agent": "Mozilla/5.0"
+}
+
+def scrape_volunteer():
+    response = requests.get(SEARCH_URL, headers=headers)
+    soup = BeautifulSoup(response.text, 'html.parser')
+
+    # Find the container div
+    container = soup.find('div', class_='col-md-8 pub-srp-opps')
+
+    # Now find the ul inside it (the first ul should be the opportunities list)
+    ul = container.find('ul')
+
+    # Then find all li elements inside that ul
+    opportunities = ul.find_all('li', recursive=False)
+
+    results = []
+
+    for opp in opportunities:
         try:
-            # Find the UL within the known container
-            container = driver.find_elements(By.CSS_SELECTOR, "div.col-md-8.pub-srp-opps")
-            ul = container.find_element(By.TAG_NAME, "ul")
-            listings = ul.find_elements(By.TAG_NAME, "li")
+            title_tag = opp.find('a', class_='pub-srp-opps__title')
+            title = title_tag.get_text(strip=True) if title_tag else "N/A"
+            link = BASE_URL + title_tag['href'] if title_tag else "N/A"
+            opp_id = opp.get('id')
+            org_tag = opp.find('a', class_='blue-drk')
+            organization = org_tag.get_text(strip=True) if org_tag else "N/A"
+            location = opp.find('div', class_='pub-srp-opps__loc')
+            location_text = location.get_text(strip=True) if location else "N/A"
+            desc = opp.find('p', class_='pub-srp-opps__desc')
+            description = desc.get_text(strip=True) if desc else "N/A"
+            posted = opp.find('div', class_='pub-srp-opps__posted')
+            posted_date = posted.get_text(strip=True).replace("Date Posted: ", "") if posted else "N/A"
+
+            results.append({
+                "id": opp_id,
+                "title": title,
+                "link": link,
+                "organization": organization,
+                "location": location_text,
+                "description": description,
+                "posted_date": posted_date
+            })
+
         except Exception as e:
-            print(f"⚠️ Couldn't find opportunity list on page {page_num}. Error: {e}")
-            continue
+            print(f"Error parsing opportunity: {e}")
 
-        for li in listings:
-            try:
-                title_elem = li.find_element(By.CSS_SELECTOR, "a.pub-srp-opps__title span")
-                org_elem = li.find_element(By.CSS_SELECTOR, ".pub-srp-opps__org a")
-                desc_elem = li.find_element(By.CLASS_NAME, "pub-srp-opps__desc")
-                loc_elem = li.find_element(By.CLASS_NAME, "pub-srp-opps__loc")
-                date_elem = li.find_element(By.CLASS_NAME, "pub-srp-opps__posted")
-                url_path = li.find_element(By.CSS_SELECTOR, "a.pub-srp-opps__title").get_attribute("href")
+    # Print results
+    for r in results:
+        print(r)
 
-                all_data.append({
-                    "title": title_elem.text.strip(),
-                    "organization": org_elem.text.strip(),
-                    "description": desc_elem.text.strip(),
-                    "location": loc_elem.text.strip(),
-                    "date_posted": date_elem.text.strip().replace("Date Posted: ", ""),
-                    "url": url_path
-                })
-            except Exception as e:
-                print(f"❌ Error scraping a listing: {e}")
-
-    driver.quit()
-    return all_data
-
-def save_volunteering_to_mongo(opps):
-    existing_count = collection.count_documents({})
-    for i, opp in enumerate(opps, start=1):
-        opp_id = f"V{existing_count + i:04d}"  # e.g. V0001
-        opp["volunteering_id"] = opp_id
-
-        # Avoid duplicate by checking title + org
-        if not collection.find_one({"title": opp["title"], "organization": opp["organization"]}):
-            collection.insert_one(opp)
-            print(f"✅ Inserted: {opp_id}")
-        else:
-            print(f"⚠️ Already exists: {opp['title']} — skipped")
-
-    print(f"\n📦 Done. Total inserted: {len(opps)}")
-
-
-# Example usage
 if __name__ == "__main__":
-
-    results = scrape_volunteering()
-    # results = soup()
-    print(results)
+    results = scrape_volunteer()
 
     # if results:
     #     save_petitions_to_mongo(results)

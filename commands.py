@@ -81,6 +81,20 @@ def activity_command(message, user, sess_id, room_id):
             return {"error": f"Unexpected error: {e}"}
     
     if place == "events":
+        # send listing of events
+        payload = {
+            "channel": f"@{user}",
+            "text": response_text
+        }
+        try:
+            # Send the message with buttons to Rocket.Chat
+            response = requests.post(ROCKETCHAT_URL, json=payload, headers=HEADERS)
+            response.raise_for_status()  # Raise an exception for HTTP errors (4xx, 5xx)
+            # return response.json()  # Return the JSON response if successful
+        except Exception as e:
+            # Handle any other unexpected errors
+            return {"error": f"Unexpected error: {e}"}
+
         print("User selected 'events'")
 
         try:
@@ -130,7 +144,7 @@ def activity_command(message, user, sess_id, room_id):
             except Exception as e:
                 # Handle any other unexpected errors
                 return {"error": f"Unexpected error: {e}"}
-                
+
         confirmation = {
             "channel": room_id,
             "text": f"You’ve joined {event_title}. We'll let others know you're attending."
