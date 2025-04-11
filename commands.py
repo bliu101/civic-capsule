@@ -32,7 +32,7 @@ def activity_command(message, user, sess_id, room_id):
     parts = message.split()
     place = parts[1]
     number = parts[2]
-    result_id = parts[3] if len(parts) > 3 else None
+    event_title = parts[3] if len(parts) > 3 else None
 
     response = generate(
         model = '4o-mini',
@@ -94,21 +94,16 @@ def activity_command(message, user, sess_id, room_id):
         except Exception as e:
             return {"error": f"Unexpected error: {e}"}
 
-        print("Result ID:", result_id)
-        event_id = ObjectId(result_id)
-        print("Resolved event ID:", event_id)
+        selected_event = list(event_signups_collection.findone({
+            "title": event_title
+        }).limit(1))
+        print("SELECTED EVENT: ", selected_event)
 
-        # selected_event = list(event_signups_collection.find({
-        #     "_id": event_id
-        # }).limit(1))
 
-        # if not selected_event:
-        #     print(f"No event found with ID: {event_id}")
-
-        # print(f"Adding user {room_id} to event signups for event")
+        print(f"Adding user {room_id} to event signups for event")
 
         event_signups_collection.update_one(
-            {"event_id": event_id},
+            {"event_title": event_title},
             {"$addToSet": {"joined_users": room_id}},
             upsert=True
         )

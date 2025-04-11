@@ -205,7 +205,7 @@ def details_complete(room_id, response_text, user, sess_id):
         matching_results = list(community_collection.find({
             "category": { "$regex": f"^{category}$", "$options": "i" }
         }).limit(5))
-        result_ids = [str(event["_id"]) for event in matching_results]
+        result_ids = [event["title"].replace(" ", "") for event in matching_results]
         
         print("RESULT IDS: ", result_ids)
     
