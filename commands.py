@@ -113,7 +113,7 @@ def activity_command(message, user, sess_id, room_id):
             return {"error": f"LLM failure: {e}"}
 
         try:
-            selected_event = community_collection.find_one({"_id": event_id})
+            selected_event = event_signups_collection.find_one({"_id": event_id})
             if not selected_event:
                 print(f"Event with ID {event_id} not found in MongoDB.")
                 return {"error": "Event not found in the database"}

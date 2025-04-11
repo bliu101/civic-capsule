@@ -126,68 +126,74 @@ def stealth_scrape_volunteermatch():
     driver.get(base_url)
     time.sleep(5)
 
-    # Click the "Cause Areas" button to open the category form
+    # Open the category filter popup
     cause_button = driver.find_element(By.CSS_SELECTOR, "li.causeareas button")
     cause_button.click()
     time.sleep(2)
 
-    # Extract all category divs
-    category_elements = driver.find_elements(By.CSS_SELECTOR, "#cat_form .js-cat-cell")
-    print(f"🔍 Found {len(category_elements)} categories.")
-
-    for i in range(len(category_elements)):
-        # Reopen the base page and refresh category list each time
-        driver.get(base_url)
-        time.sleep(5)
-        cause_button = driver.find_element(By.CSS_SELECTOR, "li.causeareas button")
-        cause_button.click()
-        time.sleep(2)
-        refreshed_categories = driver.find_elements(By.CSS_SELECTOR, "#cat_form .js-cat-cell")
-
-        cat = refreshed_categories[i]
-        cat_id = cat.get_attribute("id").split("_")[-1]
-        cat_name = cat.text.strip()
+    # Grab the original list of categories
+    original_categories = driver.find_elements(By.CSS_SELECTOR, "#cat_form .js-cat-cell")
+    print(f"🔍 Found {len(original_categories)} categories.")
+    print("ORIGINAL CATEGORIES:", original_categories)
 
     all_opportunities = []
 
-    for cat in category_elements:
+    for i in range(len(original_categories)-1):
+        # Reopen the base page each time to avoid stale references
+        driver.get(base_url)
+        # time.sleep(5)
+
+        WebDriverWait(driver, 15).until_not(
+            EC.presence_of_element_located((By.CSS_SELECTOR, "div.spinner-mask__spinner"))
+        )
+
+        WebDriverWait(driver, 15).until(
+            EC.element_to_be_clickable((By.CSS_SELECTOR, "li.causeareas button"))
+        ).click()
+
+        WebDriverWait(driver, 15).until(
+            EC.presence_of_all_elements_located((By.CSS_SELECTOR, "#cat_form .js-cat-cell"))
+        )
+
+        # cause_button = driver.find_element(By.CSS_SELECTOR, "li.causeareas button")
+        # cause_button.click()
+        # # time.sleep(10)
+
+        categories = driver.find_elements(By.CSS_SELECTOR, "#cat_form .js-cat-cell")
+        cat = categories[i]
+        cat_id = cat.get_attribute("id").split("_")[-1]
+        cat_name = cat.text.strip()
+        print(f"\n🌱 Scraping category: {cat_name} (ID: {cat_id})")
+
+        # Visit the category page
+        category_url = f"{base_url}&categories={cat_id}"
+        driver.get(category_url)
+        time.sleep(5)
+
+        # Scrape one page of results
         try:
-            cat_id = cat.get_attribute("id").split("_")[-1]  # cat_id_23 → 23
-            cat_name = cat.text.strip()
-            print(f"\n🌱 Scraping category: {cat_name} (ID: {cat_id})")
+            container = driver.find_element(By.CSS_SELECTOR, "div.col-md-8.pub-srp-opps")
+            cards = container.find_elements(By.CSS_SELECTOR, "li")
+            print(f"✅ Found {len(cards)} cards in {cat_name}")
 
-            # Load the category-specific page
-            category_url = f"{base_url}&categories={cat_id}"
-            driver.get(category_url)
-            time.sleep(5)
+            for card in cards:
+                try:
+                    title_elem = card.find_element(By.CSS_SELECTOR, "h3 a")
+                    org_elems = card.find_elements(By.CSS_SELECTOR, ".pub-srp-opps__org-name")
+                    loc_elems = card.find_elements(By.CSS_SELECTOR, ".pub-srp-opps__loc")
 
-            # Scrape one page of results
-            try:
-                container = driver.find_element(By.CSS_SELECTOR, "div.col-md-8.pub-srp-opps")
-                cards = container.find_elements(By.CSS_SELECTOR, "li")
-                print(f"✅ Found {len(cards)} cards in {cat_name}")
-
-                for card in cards:
-                    try:
-                        title_elem = card.find_element(By.CSS_SELECTOR, "h3 a")
-                        org_elems = card.find_elements(By.CSS_SELECTOR, ".pub-srp-opps__org-name")
-                        loc_elems = card.find_elements(By.CSS_SELECTOR, ".pub-srp-opps__loc")
-
-                        opportunity = {
-                            "title": title_elem.text.strip(),
-                            "organization": org_elems[0].text.strip() if org_elems else "N/A",
-                            "location": loc_elems[0].text.strip() if loc_elems else "N/A",
-                            "url": title_elem.get_attribute("href"),
-                            "category": cat_name,
-                        }
-                        all_opportunities.append(opportunity)
-                    except Exception as e:
-                        print(f"⚠️ Skipped one card in {cat_name}: {e}")
-            except Exception as e:
-                print(f"❌ No opportunities found for category {cat_name}: {e}")
-
+                    opportunity = {
+                        "title": title_elem.text.strip(),
+                        "organization": org_elems[0].text.strip() if org_elems else "N/A",
+                        "location": loc_elems[0].text.strip() if loc_elems else "N/A",
+                        "url": title_elem.get_attribute("href"),
+                        "category": cat_name,
+                    }
+                    all_opportunities.append(opportunity)
+                except Exception as e:
+                    print(f"⚠️ Skipped one card in {cat_name}: {e}")
         except Exception as e:
-            print(f"❌ Failed to load category {cat.text.strip()}: {e}")
+            print(f"❌ No opportunities found for {cat_name}: {e}")
 
     driver.quit()
     return all_opportunities
