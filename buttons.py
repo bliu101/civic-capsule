@@ -89,7 +89,7 @@ def use_skills(user):
         print(f"Error sending activity suggestions: {e}")
         return {"error": f"Unexpected error: {e}"}
 
-def send_place_options(num, username, text):
+def send_place_options(num, username, text, event_type):
     """Send a message with the place options as buttons."""
     actions = []
     for n in range(1, num + 1):
@@ -97,7 +97,7 @@ def send_place_options(num, username, text):
         actions.append({
             "type": "button",
             "text": f"{n}",
-            "msg": f"!place {n}",
+            "msg": f"!place {event_type} {n}",
             "msg_in_chat_window": True,
             "style": "primary"
         })

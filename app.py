@@ -9,7 +9,7 @@ from zoneinfo import ZoneInfo
 
 from buttons import send_activity_suggestions, send_place_options
 from agents import agent_detect_intent, agent_interest_category, agent_civic_category
-from commands import activity_command
+from commands import activity_command, confirm_command, is_valid_username, regenerate_summary, send_plan_to_friend
 
 from dotenv import load_dotenv
 from pymongo import MongoClient
@@ -86,7 +86,19 @@ def main():
     #     activity_command(message, user)
 
 
-    intent_num = agent_detect_intent(message).strip()
+    if (len(message.split()) == 1) and is_valid_username(message.split()[0]):
+        payload_initial = {
+            "channel": f"@{user}",
+            "text": f"🕣 Waiting on {message.split()[0]}'s response",
+        }
+        requests.post(ROCKETCHAT_URL, json=payload_initial, headers=HEADERS)
+        print("========REGENERATE_SUMMARY START========")
+        plan_text = regenerate_summary(sess_id)
+        print("========REGENERATE_SUMMARY DONE========")
+        print("========SEND_PLAN_TO_FRIEND START========")
+        send_plan_to_friend(message, user, plan_text) 
+        print("========SEND_PLAN_TO_FRIEND DONE========")
+        return jsonify({"status": "plan_sent", "friend_username": message})
 
     if message.startswith("!place"):
         print("========HANDLE_SHOW_MORE START========")
@@ -96,6 +108,13 @@ def main():
         # return jsonify({"text": response_text})
         return jsonify({"status": "show_more_handled"})
 
+    if message.startswith("!confirm"):
+        print("========CONFIRM_COMMAND START========")
+        confirm_command(message, user, room_id)
+        print("========CONFIRM_COMMAND DONE========")
+        return jsonify({"status": "valid_confirmation"})
+
+    intent_num = agent_detect_intent(message).strip()
     if intent_num == '1':
         send_activity_suggestions(user)
         return
@@ -213,7 +232,7 @@ def details_complete(room_id, response_text, user, sess_id):
     print(response_text)
 
     num_options = 5 #agent_determine_number(response_text)
-    send_place_options(num_options, user, response_text)
+    send_place_options(num_options, user, response_text, civic_event)
 
     # return response_text
 

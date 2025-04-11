@@ -16,7 +16,8 @@ HEADERS = {
 
 def activity_command(message, user, sess_id):
     parts = message.split()
-    place = parts[1:]
+    place = parts[1]
+    number = parts[2]
     response = generate(
         model = '4o-mini',
         system = 'Give human readable text and be friendly',
@@ -34,34 +35,155 @@ def activity_command(message, user, sess_id):
     response_text = response['response']
     print("PETITION SELECTED: ", response_text)
 
+    if (place == 'petitions'):
+        payload = {
+            "channel": f"@{user}",
+            "text": response_text,
+            "attachments": [
+                {
+                    "text": "Please click the link and sign the petition! Would you like to send this petition to other users?",
+                    "actions": [
+                        {
+                            "type": "button",
+                            "text": "✅ Yes",
+                            "msg": f"!confirm {user} yes",
+                            "msg_in_chat_window": True
+                        },
+                        {
+                            "type": "button",
+                            "text": "❌ No",
+                            "msg": f"!confirm {user} no",
+                            "msg_in_chat_window": True
+                        }
+                    ]
+                }
+            ]
+        }
+        try:
+            # Send the message with buttons to Rocket.Chat
+            response = requests.post(ROCKETCHAT_URL, json=payload, headers=HEADERS)
+            response.raise_for_status()  # Raise an exception for HTTP errors (4xx, 5xx)
+            return response.json()  # Return the JSON response if successful
+        except Exception as e:
+            # Handle any other unexpected errors
+            return {"error": f"Unexpected error: {e}"}
+    
+    if (place == "events"):
+        pass
+
+def confirm_command(message, user, room_id):
+    parts = message.split()
+    if len(parts) >= 3:
+        confirmed_user = parts[1]
+        confirmation = parts[2]
+
+        if confirmation == "yes":
+            # Ask for the friend's username
+            ask_for_friend_username(confirmed_user)
+            # send_typing_indicator(room_id)
+            return jsonify({"status": "asked_for_friend_username"})
+        elif confirmation == "no":
+            payload = {
+                "channel": f"@{confirmed_user}",
+                "text": f"The event has been canceled. Please try again!"
+            }
+            try:
+                response = requests.post(ROCKETCHAT_URL, json=payload, headers=HEADERS)
+                response.raise_for_status()
+
+                return response.json()
+            except Exception as e:
+                print(f"An error occurred stating the confirmation: {e}")
+                return {"error": f"Error: {e}"}
+    return jsonify({"status": "invalid_confirmation"})
+
+def ask_for_friend_username(username):
+    """Ask the user for their friend's username."""
     payload = {
-        "channel": f"@{user}",
-        "text": response_text,
+        "channel": f"@{username}",
+        "text": "Please enter your friend's username:"
+    }
+
+    try:
+        response = requests.post(ROCKETCHAT_URL, json=payload, headers=HEADERS)
+        response.raise_for_status()
+        print(f"Asked {username} for their friend's username.")
+
+        return response.json()
+    except Exception as e:
+        print(f"An error occurred while asking for friend's username: {e}")
+        return {"error": f"Error: {e}"}
+
+def is_valid_username(username):
+    """
+    Check if a username exists by calling Rocket.Chat's /users.info API.
+    """
+    url = f"{API_BASE_URL}/users.info?username={username}"
+    try:
+        response = requests.get(url, headers=HEADERS)
+        data = response.json()
+        if response.status_code == 200 and data.get("user"):
+            return True
+        return False
+    except Exception as e:
+        print("Error validating username:", e)
+        return False
+
+def regenerate_summary(sess_id):
+    print("MESSAGE LENGTH IS 1")
+    print("VALID USERNAME")
+    query = (
+        """
+        Give the previously generated summary of the petition.
+        You are presenting this summary of the petition to somebody else.
+        """
+    )
+    plan = generate(
+        model='4o-mini',
+        system="List the options clearly",
+        query= query,
+        temperature=0.0,
+        lastk=20,
+        session_id=sess_id
+    )
+    plan_text = plan['response']
+    return plan_text
+
+def send_plan_to_friend(friend_username, username, plan_text):
+    # """
+    # Send the plan message to the friend.
+    # """
+    payload = {
+        "channel": f"@{friend_username}",
+        "text": plan_text,
         "attachments": [
             {
-                "text": "Please click the link and sign the petition! Would you like to send this petition to other users?",
+                "text": "Do you like this plan?",
                 "actions": [
                     {
                         "type": "button",
                         "text": "✅ Yes",
-                        "msg": f"!confirm {user} yes",
+                        "msg": f"!final {username} {friend_username} yes",
                         "msg_in_chat_window": True
                     },
                     {
                         "type": "button",
                         "text": "❌ No",
-                        "msg": f"!confirm {user} no",
+                        "msg": f"!final {username} {friend_username} no",
                         "msg_in_chat_window": True
                     }
                 ]
             }
         ]
     }
+
     try:
         # Send the message with buttons to Rocket.Chat
         response = requests.post(ROCKETCHAT_URL, json=payload, headers=HEADERS)
         response.raise_for_status()  # Raise an exception for HTTP errors (4xx, 5xx)
+        print(f"Message with buttons sent successfully to {username}.")
         return response.json()  # Return the JSON response if successful
     except Exception as e:
         # Handle any other unexpected errors
+        print(f"An unexpected error occurred while sending message to {username}: {e}")
         return {"error": f"Unexpected error: {e}"}
