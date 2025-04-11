@@ -88,18 +88,39 @@ def activity_command(message, user, sess_id, room_id):
     if place == "events":
         print("User selected 'events'")
 
-        event_signups_collection = get_event_signups_collection()
+        # event_signups_collection = get_event_signups_collection()
 
-        if event_signups_collection.find_one({"title": event_title}):
-            print("found")
+        # if event_signups_collection.find_one({"title": event_title}):
+        #     print("found")
 
-        try:
-            event_signups_collection.insert_one({"event_title": event_title})
-            print(f"✅ Inserted: {event_title}")
-        except Exception as e:
-            print(f"⚠️ Error inserting {event_title}: {e}")
+        # try:
+        #     event_signups_collection.insert_one({"event_title": event_title})
+        #     print(f"✅ Inserted: {event_title}")
+        # except Exception as e:
+        #     print(f"⚠️ Error inserting {event_title}: {e}")
 
-        payload = {"channel": f"@{user}", "text": response_text}
+        payload = {"channel": f"@{user}",
+                   "text": response_text,
+                   "attachments": [
+                        {
+                            "text": "Please click the link to register for the event! Would you like to send this petition to other users?",
+                            "actions": [
+                                {
+                                    "type": "button", 
+                                    "text": "✅ Yes",
+                                    "msg": f"!confirm {user} yes",
+                                    "msg_in_chat_window": True
+                                },
+                                {
+                                    "type": "button",
+                                    "text": "❌ No",
+                                    "msg": f"!confirm {user} no",
+                                    "msg_in_chat_window": True
+                                }
+                            ]
+                        }
+                    ]
+                   }
         try:
             response = requests.post(ROCKETCHAT_URL, json=payload, headers=HEADERS)
             response.raise_for_status()
