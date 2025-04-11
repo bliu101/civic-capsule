@@ -26,6 +26,9 @@ HEADERS = {
     "X-User-Id": os.environ.get("RC_userId") #Replace with your bot user id for local testing or keep it and store secrets in Koyeb
 }
 
+def get_event_signups_collection():
+    return db["event_signups"]
+
 def activity_command(message, user, sess_id, room_id):
     parts = message.split()
     place = parts[1]
@@ -85,6 +88,7 @@ def activity_command(message, user, sess_id, room_id):
     if place == "events":
         print("User selected 'events'")
 
+        event_signups_collection = get_event_signups_collection()
 
         if event_signups_collection.find_one({"title": event_title}):
             print("found")
