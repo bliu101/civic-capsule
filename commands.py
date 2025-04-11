@@ -92,26 +92,22 @@ def activity_command(message, user, sess_id, room_id):
         except Exception as e:
             return {"error": f"Unexpected error: {e}"}
 
-        try:
-            print(f"Calling LLM to regenerate event #{number}")
-            response = generate(
-                model='4o-mini',
-                system="Return only the MongoDB _id (string) of the selected event.",
-                query=f"""
-                You previously showed the user a list of events. Each event had a MongoDB string-based _id.
-                The user selected event #{number}.
-                Return only the exact _id of that event. No extra formatting.
-                """,
-                temperature=0.0,
-                lastk=20,
-                session_id=sess_id
-            )
-            event_id = response.get("response", "").strip().replace('"', '').replace("'", '')
-            print("Resolved event ID:", event_id)
-        except Exception as e:
-            print(f"Error generating or parsing event summary: {e}")
-            return {"error": f"LLM failure: {e}"}
-
+        print(f"Calling LLM to regenerate event #{number}")
+        response = generate(
+            model='4o-mini',
+            system="Return only the MongoDB _id (string) of the selected event.",
+            query=f"""
+            You previously showed the user a list of events. Each event had a MongoDB string-based _id.
+            The user selected event #{number}.
+            Return only the exact _id of that event. No extra formatting.
+            """,
+            temperature=0.0,
+            lastk=20,
+            session_id=sess_id
+        )
+        event_id = response.get("response", "").strip().replace('"', '').replace("'", '')
+        print("Resolved event ID:", event_id)
+        event_id = ObjectId(event_id)
 
         selected_event = list(event_signups_collection.find({
             "_id": event_id
@@ -128,37 +124,7 @@ def activity_command(message, user, sess_id, room_id):
             upsert=True
         )
 
-        doc = event_signups_collection.find_one({"event_id": event_id})
-        if not doc:
-            print(f"No signup document found yet for event ID {event_id}")
-            other_users = []
-        else:
-            other_users = [rid for rid in doc.get("joined_users", []) if rid != room_id]
 
-        for other_room in other_users:
-            print(f"Notifying {other_room} about new signup")
-            notification = {
-                "channel": other_room,
-                "text": f"{user} just joined {event_title}. You're not alone!"
-            }
-            try:
-                response = requests.post(ROCKETCHAT_URL, json=notification, headers=HEADERS)
-                response.raise_for_status()
-            except Exception as e:
-                print(f"Error notifying {other_room}: {e}")
-
-        confirmation = {
-            "channel": room_id,
-            "text": f"You've joined {event_title}. We'll let others know you're attending."
-        }
-        print(f"Sending confirmation to {room_id}")
-        try:
-            response = requests.post(ROCKETCHAT_URL, json=confirmation, headers=HEADERS)
-            response.raise_for_status()
-            return response.json()
-        except Exception as e:
-            print(f"Error sending confirmation: {e}")
-            return {"error": f"Unexpected error: {e}"}
 
 
 def confirm_command(message, user, room_id):

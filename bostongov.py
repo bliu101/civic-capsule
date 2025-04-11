@@ -92,7 +92,6 @@ def scrape_filtered_boston_events(pages=1, event_type_ids=None):
                 _id = md5((title + time).encode("utf-8")).hexdigest()  # Create unique hash
 
                 document = {
-                    "_id": _id,
                     "title": title,
                     "category": category,
                     "time": time,
