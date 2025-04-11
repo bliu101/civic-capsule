@@ -192,6 +192,7 @@ def details_complete(room_id, response_text, user, sess_id):
     requests.post(ROCKETCHAT_URL, json=payload_initial, headers=HEADERS)
 
     matching_results = None
+    result_ids = None
 
     print("CIVIC EVENT CHOSEN: ", civic_event)
 
@@ -204,6 +205,9 @@ def details_complete(room_id, response_text, user, sess_id):
         matching_results = list(community_collection.find({
             "category": { "$regex": f"^{category}$", "$options": "i" }
         }).limit(5))
+        result_ids = [str(event["_id"]) for event in matching_results]
+        
+        print("RESULT IDS: ", result_ids)
     
     print("MATCHING RESULTS: ", matching_results)
         
@@ -232,7 +236,7 @@ def details_complete(room_id, response_text, user, sess_id):
     print(response_text)
 
     num_options = 5 #agent_determine_number(response_text)
-    send_place_options(num_options, user, response_text, civic_event)
+    send_place_options(num_options, user, response_text, civic_event, result_ids)
 
     # return response_text
 

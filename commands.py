@@ -32,6 +32,8 @@ def activity_command(message, user, sess_id, room_id):
     parts = message.split()
     place = parts[1]
     number = parts[2]
+    result_id = parts[3]
+
     response = generate(
         model = '4o-mini',
         system = 'Give human readable text and be friendly',
@@ -92,22 +94,8 @@ def activity_command(message, user, sess_id, room_id):
         except Exception as e:
             return {"error": f"Unexpected error: {e}"}
 
-        print(f"Calling LLM to regenerate event #{number}")
-        response = generate(
-            model='4o-mini',
-            system="Return only the MongoDB _id (string) of the selected event.",
-            query=f"""
-            You previously showed the user a list of events. Each event had a MongoDB string-based _id.
-            The user selected event #{number}.
-            Return only the exact _id of that event. No extra formatting.
-            """,
-            temperature=0.0,
-            lastk=20,
-            session_id=sess_id
-        )
-        event_id = response.get("response", "").strip().replace('"', '').replace("'", '')
-        print("Resolved event ID:", event_id)
-        event_id = ObjectId(event_id)
+        print("Resolved event ID:", result_id)
+        event_id = ObjectId(result_id)
 
         selected_event = list(event_signups_collection.find({
             "_id": event_id

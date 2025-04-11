@@ -66,6 +66,13 @@ def scrape_filtered_boston_events(pages=1, event_type_ids=None):
                         detail_soup = BeautifulSoup(detail_resp.content, "html.parser")
 
                         og_desc_tag = detail_soup.find("meta", property="og:description")
+
+                        date_tag = detail_soup.find(class_="date-title")
+                        if date_tag:
+                            event_date = date_tag.get_text(strip=True)
+                        else:
+                            event_date = ""
+
                         if og_desc_tag and og_desc_tag.get("content"):
                             full_description = og_desc_tag["content"]
                         else:
@@ -94,6 +101,7 @@ def scrape_filtered_boston_events(pages=1, event_type_ids=None):
                 document = {
                     "title": title,
                     "category": category,
+                    "date": event_date,
                     "time": time,
                     "address": address,
                     "email": email,
@@ -105,7 +113,7 @@ def scrape_filtered_boston_events(pages=1, event_type_ids=None):
                     },
                     "link": link if link else "No link"
                 }
-                if collection.find_one({"title": title}):
+                if collection.find_one({"title": title, "category": category}):
                     print(f"⚠️ Skipping duplicate event: {title}")
                     continue
                 try:
