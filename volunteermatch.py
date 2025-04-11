@@ -118,19 +118,21 @@ def stealth_scrape_volunteermatch(pages=5):
 
 def save_volunteering_to_mongo(volunteers):
     existing_count = collection.count_documents({})
-    for i, volunteer in enumerate(volunteers, start=1):
-        volunteer_id = f"V{existing_count + i:04d}"  # e.g. P0001
-        volunteer["volunteer_id"] = volunteer_id
+    inserted_count = 0
 
-        # Optional: avoid duplicate by checking URL
+    for i, volunteer in enumerate(volunteers, start=1):
+        volunteer_id = f"V{existing_count + i:04d}"  # e.g. V0001
+        volunteer["volunteer_id"] = volunteer_id
+        volunteer["url"] = volunteer.pop("link")  # Rename 'link' → 'url'
+
         if not collection.find_one({"url": volunteer["url"]}):
             collection.insert_one(volunteer)
+            inserted_count += 1
             print(f"✅ Inserted: {volunteer_id}")
         else:
             print(f"⚠️ Already exists: {volunteer['url']} — skipped")
 
-    print(f"\n📦 Done. Total inserted: {len(volunteers)}")
-
+    print(f"\n📦 Done. Total inserted: {inserted_count}")
 
 if __name__ == "__main__":
     # results = scrape_volunteermatch_boston()

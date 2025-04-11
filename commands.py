@@ -85,92 +85,79 @@ def activity_command(message, user, sess_id, room_id):
     if place == "events":
         print("User selected 'events'")
 
-        # Send the event list message back to the user
-        payload = {
-            "channel": f"@{user}",
-            "text": response_text
-        }
+        payload = {"channel": f"@{user}", "text": response_text}
         try:
             response = requests.post(ROCKETCHAT_URL, json=payload, headers=HEADERS)
             response.raise_for_status()
         except Exception as e:
             return {"error": f"Unexpected error: {e}"}
 
-        # Ask LLM to regenerate selected event summary
         try:
             print(f"Calling LLM to regenerate event #{number}")
             response = generate(
                 model='4o-mini',
-                system="Return only the MongoDB ObjectId of the selected event.",
-                query=(
-                    f"""You previously showed the user a list of events. Each event had a MongoDB ObjectId (_id).
-                    The user selected event #{number}.
-                    Return only the exact ObjectId of that selected event, with no surrounding punctuation, labels, or explanation.
-                    It should be a 24-character lowercase hexadecimal string.
-                    Do not return anything except that ID."""
-                ),
+                system="Return only the MongoDB _id (string) of the selected event.",
+                query=f"""
+                You previously showed the user a list of events. Each event had a MongoDB string-based _id.
+                The user selected event #{number}.
+                Return only the exact _id of that event. No extra formatting.
+                """,
                 temperature=0.0,
                 lastk=20,
                 session_id=sess_id
             )
-
-            raw_id = response.get("response", "").strip().replace('"', '').replace("'", "")
-            print("Resolved event ID:", raw_id)
-
+            event_id = response.get("response", "").strip().replace('"', '').replace("'", '')
+            print("Resolved event ID:", event_id)
         except Exception as e:
             print(f"Error generating or parsing event summary: {e}")
             return {"error": f"LLM failure: {e}"}
 
-        # Use ObjectId to query the database
         try:
-            selected_event = community_collection.find_one({"_id": raw_id})
+            selected_event = community_collection.find_one({"_id": event_id})
             if not selected_event:
-                print(f"Event with ID {raw_id} not found in MongoDB.")
+                print(f"Event with ID {event_id} not found in MongoDB.")
                 return {"error": "Event not found in the database"}
         except Exception as e:
-            print(f"Invalid ObjectId or DB error: {e}")
-            return {"error": "Invalid event ID or DB lookup failed"}
+            print(f"Database lookup error for ID {event_id}: {e}")
+            return {"error": "DB lookup failed"}
 
         event_title = selected_event["title"]
         room_id = f"@{user}"
         print(f"Adding user {room_id} to event signups for event: {event_title}")
 
-        result = event_signups_collection.update_one(
-            {"event_id": raw_id},
-            {
-                "$setOnInsert": {"title": event_title},
-                "$addToSet": {"joined_users": room_id}
-            },
+        event_signups_collection.update_one(
+            {"event_id": event_id},
+            {"$setOnInsert": {"title": event_title}, "$addToSet": {"joined_users": room_id}},
             upsert=True
         )
-        print("Signup update complete:", result.raw_result)
 
-        doc = event_signups_collection.find_one({"event_id": raw_id})
-        other_users = [rid for rid in doc["joined_users"] if rid != room_id]
-        print(f"Found {len(other_users)} other users to notify")
+        doc = event_signups_collection.find_one({"event_id": event_id})
+        if not doc:
+            print(f"No signup document found yet for event ID {event_id}")
+            other_users = []
+        else:
+            other_users = [rid for rid in doc.get("joined_users", []) if rid != room_id]
 
         for other_room in other_users:
             print(f"Notifying {other_room} about new signup")
             notification = {
                 "channel": other_room,
-                "text": f"{user} just joined {event_title}. You’re not alone!"
+                "text": f"{user} just joined {event_title}. You're not alone!"
             }
             try:
                 response = requests.post(ROCKETCHAT_URL, json=notification, headers=HEADERS)
                 response.raise_for_status()
-                print(f"Notification sent to {other_room}")
             except Exception as e:
                 print(f"Error notifying {other_room}: {e}")
 
         confirmation = {
             "channel": room_id,
-            "text": f"You’ve joined {event_title}. We'll let others know you're attending."
+            "text": f"You've joined {event_title}. We'll let others know you're attending."
         }
         print(f"Sending confirmation to {room_id}")
         try:
             response = requests.post(ROCKETCHAT_URL, json=confirmation, headers=HEADERS)
             response.raise_for_status()
-            print("Confirmation sent.")
             return response.json()
         except Exception as e:
             print(f"Error sending confirmation: {e}")

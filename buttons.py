@@ -14,7 +14,7 @@ def send_activity_suggestions(user):
         #("Local Elections", "🗳️"),
         ("Petitions", "📝"),
         ("Community Events", "🎤")
-        #("Volunteering Opportunities", "🤝"),
+        ("Volunteering Opportunities", "🤝"),
     ]
     
     # Build the actions array with improved formatting and optional styling
