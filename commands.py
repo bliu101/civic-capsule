@@ -1,6 +1,7 @@
 from llmproxy import generate, pdf_upload
 from buttons import use_skills
 import requests
+import os
 
 # Rocket.Chat API endpoint
 API_BASE_URL = "https://chat.genaiconnect.net/api/v1"
