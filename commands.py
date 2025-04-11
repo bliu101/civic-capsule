@@ -14,8 +14,6 @@ DB_NAME = os.environ.get("DB_NAME", "rocketchat")
 client = MongoClient(MONGO_URI)
 db = client[DB_NAME]
 event_signups_collection = db["event_signups"]
-community_collection = db["events"]
-
 
 # Rocket.Chat API endpoint
 API_BASE_URL = "https://chat.genaiconnect.net/api/v1"
