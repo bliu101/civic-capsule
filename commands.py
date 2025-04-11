@@ -26,6 +26,11 @@ HEADERS = {
     "X-User-Id": os.environ.get("RC_userId") #Replace with your bot user id for local testing or keep it and store secrets in Koyeb
 }
 
+upload_headers = {
+    "X-Auth-Token": os.environ.get("RC_token"),  #Replace with your bot token for local testing or keep it and store secrets in Koyeb
+    "X-User-Id": os.environ.get("RC_userId") #Replace with your bot user id for local testing or keep it and store secrets in Koyeb
+}
+
 def get_event_signups_collection():
     return db["event_signups"]
 
@@ -126,6 +131,86 @@ def activity_command(message, user, sess_id, room_id):
             response.raise_for_status()
         except Exception as e:
             return {"error": f"Unexpected error: {e}"}
+        
+        system_message = (
+                "You are an assistant that generates iCalendar (ICS) documents based on previous conversation context. " 
+                "Your output must be a valid ICS file conforming to RFC 5545, " 
+                "and include only the ICS content without any additional commentary or explanation. " 
+                "Ensure you include mandatory fields such as BEGIN:VCALENDAR, VERSION, PRODID, BEGIN:VEVENT, UID, DTSTAMP, " 
+                "DTSTART, DTEND, and SUMMARY."
+                "Note that no line length should exceed 75 characters."
+            )
+        query = (f"""
+                Using the previously generated event summary from our conversation context, generate a complete and valid iCalendar (ICS) document
+                that reflects the event details.
+                Name the calendar event based on the activity/place found in the summary.
+                Set the location of the calendar event to the address of the location in the summary.
+                Set the time of the calendar event to the time of the hangout, using the current date as reference.
+                Keep the description brief (less than 60 characters) to comply with ICS file format.
+                Output only the ICS content with no extra text.
+                Follow valid ICS file format.
+                """)
+        response = generate(
+            model='4o-mini',
+            system= system_message,
+            query= query,
+            temperature=0.0,
+            lastk=20,
+            session_id=sess_id
+        )
+        ical_content = response.get('response').strip()
+        if ical_content.startswith("```") and ical_content.endswith("```"):
+            ical_content = ical_content[3:-3].strip()
+        print("Generated ICS content:")
+        print(ical_content)
+
+        # Define the upload URL (same for all uploads)
+        print("Room ID for file upload:", room_id)
+        upload_url = f"{API_BASE_URL}/rooms.upload/{room_id}"
+        print("Constructed upload URL:", upload_url)
+
+        # Write the ICS content to a file
+        ics_filename = "event.ics"
+        print(f"Writing ICS content to file: {ics_filename}")
+        ics_content = ical_content.replace("\n", "\r\n")
+        ics_content = ics_content.strip()
+
+        lines = ics_content.split("\n")
+        cleaned_lines = [line.rstrip() for line in lines]  # Remove trailing whitespace from each line
+        ics_content = "\r\n".join(cleaned_lines)
+
+        try:
+            with open(ics_filename, "w") as f:
+                f.write(ics_content)
+            print("ICS file written successfully.")
+        except Exception as e:
+            print(f"Error writing ICS file: {e}")
+
+        # Read and print the ICS file contents
+        try:
+            with open(ics_filename, "r") as f:
+                file_contents = f.read()
+            print("ICS file contents:")
+            print(file_contents)
+        except Exception as e:
+            print(f"Error reading ICS file: {e}")
+
+
+        # Prepare the file for upload
+        try:
+            files = {'file': (os.path.basename(ics_filename), open(ics_filename, "rb"), "text/calendar")}
+            data = {'description': 'Here is a calendar invitation with your plan!'}
+            print("About to send file upload POST request with data:", data)
+            print("Headers being used:", HEADERS)
+            response_upload = requests.post(upload_url, headers=upload_headers, data=data, files=files)
+            print("File upload response status code:", response_upload.status_code)
+            print("File upload response text:", response_upload.text)
+            if response_upload.status_code == 200:
+                print(f"File {ics_filename} has been sent to {user}.")
+            else:
+                print(f"Failed to send file to {user}. Error: {response_upload.text}")
+        except Exception as e:
+            print(f"An exception occurred during file upload: {e}")
 
 
 

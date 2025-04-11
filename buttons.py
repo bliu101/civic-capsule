@@ -13,8 +13,8 @@ def send_activity_suggestions(user):
     suggestions = [
         #("Local Elections", "🗳️"),
         ("Petitions", "📝"),
-        ("Community Events", "🎤"),
-        ("Volunteering Opportunities", "🤝"),
+        ("Community Events", "🎤")
+        # ("Volunteering Opportunities", "🤝"),
     ]
     
     # Build the actions array with improved formatting and optional styling
