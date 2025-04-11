@@ -113,11 +113,10 @@ def activity_command(message, user, sess_id, room_id):
             return {"error": f"LLM failure: {e}"}
 
         try:
-            cursor = event_signups_collection.find({"_id": event_id}).limit(1)
-            selected_event = next(cursor, None)
-            if not selected_event:
+            if event_signups_collection.count_documents({"_id": event_id}, limit=1) == 0:
                 print(f"Event with ID {event_id} not found in MongoDB.")
                 return {"error": "Event not found in the database"}
+            selected_event = event_signups_collection.find_one({"_id": event_id})
         except Exception as e:
             print(f"Database lookup error for ID {event_id}: {e}")
             return {"error": "DB lookup failed"}
