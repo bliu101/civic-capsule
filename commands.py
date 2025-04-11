@@ -2,6 +2,16 @@ from llmproxy import generate, pdf_upload
 from buttons import use_skills
 import requests
 import os
+from flask import Flask, request, jsonify, session
+
+from pymongo import MongoClient
+
+MONGO_URI = os.environ.get("MONGODB_URI")
+DB_NAME = os.environ.get("DB_NAME", "rocketchat")
+
+client = MongoClient(MONGO_URI)
+db = client[DB_NAME]
+event_signups_collection = db["event_signups"]
 
 # Rocket.Chat API endpoint
 API_BASE_URL = "https://chat.genaiconnect.net/api/v1"
@@ -68,8 +78,48 @@ def activity_command(message, user, sess_id, room_id):
             # Handle any other unexpected errors
             return {"error": f"Unexpected error: {e}"}
     
-    if (place == "events"):
-        pass
+    if place == "events":
+        # Get the list of matching events stored from previous message (you could store this in session)
+        # For now, query events sorted by some consistent order
+        try:
+            number_int = int(number) - 1
+            event_list = list(community_collection.find({"category": {"$exists": True}}).limit(10))
+            selected_event = event_list[number_int]
+        except Exception as e:
+            return {"error": f"Couldn't find selected event: {e}"}
+
+        event_id = selected_event["_id"]
+        event_title = selected_event["title"]
+        room_id = f"@{user}"  # or pass this in from the POST payload for accuracy
+
+        # Add user to the event_signups list
+        event_signups_collection.update_one(
+            {"event_id": event_id},
+            {
+                "$setOnInsert": {"title": event_title},
+                "$addToSet": {"joined_users": room_id}
+            },
+            upsert=True
+        )
+
+        # Notify others
+        doc = event_signups_collection.find_one({"event_id": event_id})
+        other_users = [rid for rid in doc["joined_users"] if rid != room_id]
+
+        for other_room in other_users:
+            notification = {
+                "channel": other_room,
+                "text": f"👋 {user} just joined **{event_title}**. You’re not alone!"
+            }
+            requests.post(ROCKETCHAT_URL, json=notification, headers=HEADERS)
+
+        # Confirm to user
+        confirmation = {
+            "channel": room_id,
+            "text": f"✅ You’ve joined **{event_title}**!\nWe’ll let others know you’re coming too 😊"
+        }
+        requests.post(ROCKETCHAT_URL, json=confirmation, headers=HEADERS)
+
 
 def confirm_command(message, user, room_id):
     parts = message.split()
