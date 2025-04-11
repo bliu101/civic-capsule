@@ -172,6 +172,8 @@ def details_complete(room_id, response_text, user, sess_id):
 
     matching_results = None
 
+    print("CIVIC EVENT CHOSEN: ", civic_event)
+
     if civic_event == 'petitions':
         matching_results = list(petitions_collection.find({
             "categories": category
@@ -181,6 +183,8 @@ def details_complete(room_id, response_text, user, sess_id):
         matching_results = list(community_collection.find({
             "category": category
         }).limit(5))
+    
+    print("MATCHING RESULTS: ", matching_results)
         
     query = (
         f'''

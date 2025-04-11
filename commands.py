@@ -25,7 +25,7 @@ def activity_command(message, user, sess_id):
         "text": response_text,
         "attachments": [
             {
-                "text": "Would you like to send this petition to other users?",
+                "text": "Please click the link and sign the petition! Would you like to send this petition to other users?",
                 "actions": [
                     {
                         "type": "button",
