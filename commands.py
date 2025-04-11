@@ -85,12 +85,6 @@ def activity_command(message, user, sess_id, room_id):
     if place == "events":
         print("User selected 'events'")
 
-        payload = {"channel": f"@{user}", "text": response_text}
-        try:
-            response = requests.post(ROCKETCHAT_URL, json=payload, headers=HEADERS)
-            response.raise_for_status()
-        except Exception as e:
-            return {"error": f"Unexpected error: {e}"}
 
         if event_signups_collection.find_one({"title": event_title}):
             print("found")
@@ -100,6 +94,13 @@ def activity_command(message, user, sess_id, room_id):
             print(f"✅ Inserted: {event_title}")
         except Exception as e:
             print(f"⚠️ Error inserting {event_title}: {e}")
+
+        payload = {"channel": f"@{user}", "text": response_text}
+        try:
+            response = requests.post(ROCKETCHAT_URL, json=payload, headers=HEADERS)
+            response.raise_for_status()
+        except Exception as e:
+            return {"error": f"Unexpected error: {e}"}
 
 
 
