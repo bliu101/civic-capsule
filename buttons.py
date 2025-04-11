@@ -11,10 +11,10 @@ HEADERS = {
 def send_activity_suggestions(user):
     # Pair each suggestion with an emoji for a more visual presentation
     suggestions = [
-        ("Local Elections", "🗳️"),
+        #("Local Elections", "🗳️"),
         ("Petitions", "📝"),
-        ("Community Events", "🎤"),
-        ("Volunteering Opportunities", "🤝"),
+        ("Community Events", "🎤")
+        #("Volunteering Opportunities", "🤝"),
     ]
     
     # Build the actions array with improved formatting and optional styling

@@ -3,6 +3,8 @@ from buttons import use_skills
 import requests
 import os
 from flask import Flask, request, jsonify, session
+from bson import ObjectId
+
 
 from pymongo import MongoClient
 
@@ -81,40 +83,55 @@ def activity_command(message, user, sess_id, room_id):
             return {"error": f"Unexpected error: {e}"}
     
     if place == "events":
-        # send listing of events
+        print("User selected 'events'")
+
+        # Send the event list message back to the user
         payload = {
             "channel": f"@{user}",
             "text": response_text
         }
         try:
-            # Send the message with buttons to Rocket.Chat
             response = requests.post(ROCKETCHAT_URL, json=payload, headers=HEADERS)
-            response.raise_for_status()  # Raise an exception for HTTP errors (4xx, 5xx)
-            # return response.json()  # Return the JSON response if successful
+            response.raise_for_status()
         except Exception as e:
-            # Handle any other unexpected errors
             return {"error": f"Unexpected error: {e}"}
 
-        print("User selected 'events'")
-
+        # Ask LLM to regenerate selected event summary
         try:
-            number_int = int(number) - 1
-            print(f"Parsed number: {number_int + 1}")
-
-            event_list = list(community_collection.find({"category": {"$exists": True}}).limit(10))
-            print(f"Fetched {len(event_list)} events from the database")
-
-            selected_event = event_list[number_int]
-            event_id = selected_event["_id"]
-            event_title = selected_event["title"]
-            print(f"Selected event: {event_title} (ID: {event_id})")
+            print(f"Calling LLM to regenerate event #{number}")
+            response = generate(
+                model='4o-mini',
+                system="Return only the unique event ID for the selected event.",
+                query=(
+                    f"""The user previously saw a list of events with associated IDs.
+                    They selected event #{number}.
+                    Return only the exact ID (no punctuation, no title, no prefix), as it was originally stored."""
+                ),
+                temperature=0.0,
+                lastk=20,
+                session_id=sess_id
+            )
+            event_id = response.get("response", "").strip().replace('"', '').replace("'", "")
+            print("Resolved event ID:", event_id)
 
         except Exception as e:
-            print(f"Error selecting event: {e}")
-            return {"error": f"Couldn't find selected event: {e}"}
+            print(f"Error generating or parsing event summary: {e}")
+            return {"error": f"LLM failure: {e}"}
 
-        room_id = f"@{user}"  # You can update this if actual room ID is available
-        print(f"Adding user {room_id} to event signups")
+        # Use ObjectId to query the database
+        try:
+            event_oid = ObjectId(event_id)
+            selected_event = community_collection.find_one({"_id": event_oid})
+            if not selected_event:
+                print(f"Event with ID {event_id} not found in MongoDB.")
+                return {"error": "Event not found in the database"}
+        except Exception as e:
+            print(f"Invalid ObjectId or DB error: {e}")
+            return {"error": "Invalid event ID or DB lookup failed"}
+
+        event_title = selected_event["title"]
+        room_id = f"@{user}"
+        print(f"Adding user {room_id} to event signups for event: {event_title}")
 
         result = event_signups_collection.update_one(
             {"event_id": event_id},
@@ -137,12 +154,11 @@ def activity_command(message, user, sess_id, room_id):
                 "text": f"{user} just joined {event_title}. You’re not alone!"
             }
             try:
-                # Send the message with buttons to Rocket.Chat
                 response = requests.post(ROCKETCHAT_URL, json=notification, headers=HEADERS)
-                response.raise_for_status()  # Raise an exception for HTTP errors (4xx, 5xx)
+                response.raise_for_status()
+                print(f"Notification sent to {other_room}")
             except Exception as e:
-                # Handle any other unexpected errors
-                return {"error": f"Unexpected error: {e}"}
+                print(f"Error notifying {other_room}: {e}")
 
         confirmation = {
             "channel": room_id,
@@ -158,7 +174,6 @@ def activity_command(message, user, sess_id, room_id):
             print(f"Error sending confirmation: {e}")
             return {"error": f"Unexpected error: {e}"}
 
-        return
 
 
 
