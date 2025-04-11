@@ -101,16 +101,19 @@ def activity_command(message, user, sess_id, room_id):
             print(f"Calling LLM to regenerate event #{number}")
             response = generate(
                 model='4o-mini',
-                system="Return only the unique event ID for the selected event.",
+                system="Return only the MongoDB ObjectId of the selected event.",
                 query=(
-                    f"""The user previously saw a list of events with associated IDs.
-                    They selected event #{number}.
-                    Return only the exact ID (no punctuation, no title, no prefix), as it was originally stored."""
+                    f"""You previously showed the user a list of events. Each event had a MongoDB ObjectId (_id).
+                    The user selected event #{number}.
+                    Return only the exact ObjectId of that selected event, with no surrounding punctuation, labels, or explanation.
+                    It should be a 24-character lowercase hexadecimal string.
+                    Do not return anything except that ID."""
                 ),
                 temperature=0.0,
                 lastk=20,
                 session_id=sess_id
             )
+
             event_id = response.get("response", "").strip().replace('"', '').replace("'", "")
             print("Resolved event ID:", event_id)
 
@@ -120,8 +123,7 @@ def activity_command(message, user, sess_id, room_id):
 
         # Use ObjectId to query the database
         try:
-            event_oid = ObjectId(event_id)
-            selected_event = community_collection.find_one({"_id": event_oid})
+            selected_event = community_collection.find_one({"_id": raw_id})
             if not selected_event:
                 print(f"Event with ID {event_id} not found in MongoDB.")
                 return {"error": "Event not found in the database"}
