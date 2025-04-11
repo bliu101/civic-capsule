@@ -92,17 +92,14 @@ def activity_command(message, user, sess_id, room_id):
         except Exception as e:
             return {"error": f"Unexpected error: {e}"}
 
-        selected_event = event_signups_collection.find_one({"title": event_title})
-        print("SELECTED EVENT: ", selected_event)
+        if event_signups_collection.find_one({"title": event_title}):
+            print("found")
 
-
-        print(f"Adding user {room_id} to event signups for event")
-
-        event_signups_collection.update_one(
-            {"event_title": event_title},
-            {"$addToSet": {"joined_users": room_id}},
-            upsert=True
-        )
+        try:
+            event_signups_collection.insert_one({"event_title": event_title})
+            print(f"✅ Inserted: {event_title}")
+        except Exception as e:
+            print(f"⚠️ Error inserting {event_title}: {e}")
 
 
 
