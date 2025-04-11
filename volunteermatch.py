@@ -73,45 +73,108 @@ def scrape_volunteermatch_boston():
     driver.quit()
     return opportunities
 
-def stealth_scrape_volunteermatch(pages=5):
+# def stealth_scrape_volunteermatch(pages=5):
+#     options = uc.ChromeOptions()
+#     options.add_argument("--no-sandbox")
+#     options.add_argument("--disable-dev-shm-usage")
+
+#     driver = uc.Chrome(options=options)
+
+#     all_opportunities = []
+
+#     for page in range(1, pages + 1):
+#         url = f"https://www.volunteermatch.org/search/?l=Boston,%20MA,%20USA&p={page}"
+#         print(f"\n🌐 Scraping page {page} → {url}")
+#         driver.get(url)
+#         time.sleep(5)
+
+#         try:
+#             container = driver.find_element(By.CSS_SELECTOR, "div.col-md-8.pub-srp-opps")
+#             cards = container.find_elements(By.CSS_SELECTOR, "li")
+#             print(f"✅ Found {len(cards)} cards on page {page}")
+
+#             for card in cards:
+#                 try:
+#                     title_elem = card.find_element(By.CSS_SELECTOR, "h3 a")
+#                     org_elems = card.find_elements(By.CSS_SELECTOR, ".pub-srp-opps__org-name")
+#                     loc_elems = card.find_elements(By.CSS_SELECTOR, ".pub-srp-opps__loc")
+
+#                     opportunity = {
+#                         "title": title_elem.text.strip(),
+#                         "organization": org_elems[0].text.strip() if org_elems else "N/A",
+#                         "location": loc_elems[0].text.strip() if loc_elems else "N/A",
+#                         "link": title_elem.get_attribute("href"),
+#                     }
+#                     all_opportunities.append(opportunity)
+
+#                 except Exception as e:
+#                     print(f"⚠️ Skipped one card: {e}")
+
+#         except Exception as e:
+#             print(f"❌ Could not scrape page {page}: {e}")
+
+#     driver.quit()
+#     return all_opportunities
+
+def stealth_scrape_volunteermatch():
+    base_url = "https://www.volunteermatch.org/search/?l=Boston,%20MA,%20USA"
     options = uc.ChromeOptions()
     options.add_argument("--no-sandbox")
     options.add_argument("--disable-dev-shm-usage")
 
     driver = uc.Chrome(options=options)
+    driver.get(base_url)
+    time.sleep(5)
+
+    # Click the "Cause Areas" button to open the category form
+    cause_button = driver.find_element(By.CSS_SELECTOR, "li.causeareas button")
+    cause_button.click()
+    time.sleep(2)
+
+    # Extract all category divs
+    category_elements = driver.find_elements(By.CSS_SELECTOR, "#cat_form .js-cat-cell")
+    print(f"🔍 Found {len(category_elements)} categories.")
 
     all_opportunities = []
 
-    for page in range(1, pages + 1):
-        url = f"https://www.volunteermatch.org/search/?l=Boston,%20MA,%20USA&p={page}"
-        print(f"\n🌐 Scraping page {page} → {url}")
-        driver.get(url)
-        time.sleep(5)
-
+    for cat in category_elements:
         try:
-            container = driver.find_element(By.CSS_SELECTOR, "div.col-md-8.pub-srp-opps")
-            cards = container.find_elements(By.CSS_SELECTOR, "li")
-            print(f"✅ Found {len(cards)} cards on page {page}")
+            cat_id = cat.get_attribute("id").split("_")[-1]  # cat_id_23 → 23
+            cat_name = cat.text.strip()
+            print(f"\n🌱 Scraping category: {cat_name} (ID: {cat_id})")
 
-            for card in cards:
-                try:
-                    title_elem = card.find_element(By.CSS_SELECTOR, "h3 a")
-                    org_elems = card.find_elements(By.CSS_SELECTOR, ".pub-srp-opps__org-name")
-                    loc_elems = card.find_elements(By.CSS_SELECTOR, ".pub-srp-opps__loc")
+            # Load the category-specific page
+            category_url = f"{base_url}&categories={cat_id}"
+            driver.get(category_url)
+            time.sleep(5)
 
-                    opportunity = {
-                        "title": title_elem.text.strip(),
-                        "organization": org_elems[0].text.strip() if org_elems else "N/A",
-                        "location": loc_elems[0].text.strip() if loc_elems else "N/A",
-                        "link": title_elem.get_attribute("href"),
-                    }
-                    all_opportunities.append(opportunity)
+            # Scrape one page of results
+            try:
+                container = driver.find_element(By.CSS_SELECTOR, "div.col-md-8.pub-srp-opps")
+                cards = container.find_elements(By.CSS_SELECTOR, "li")
+                print(f"✅ Found {len(cards)} cards in {cat_name}")
 
-                except Exception as e:
-                    print(f"⚠️ Skipped one card: {e}")
+                for card in cards:
+                    try:
+                        title_elem = card.find_element(By.CSS_SELECTOR, "h3 a")
+                        org_elems = card.find_elements(By.CSS_SELECTOR, ".pub-srp-opps__org-name")
+                        loc_elems = card.find_elements(By.CSS_SELECTOR, ".pub-srp-opps__loc")
+
+                        opportunity = {
+                            "title": title_elem.text.strip(),
+                            "organization": org_elems[0].text.strip() if org_elems else "N/A",
+                            "location": loc_elems[0].text.strip() if loc_elems else "N/A",
+                            "url": title_elem.get_attribute("href"),
+                            "category": cat_name,
+                        }
+                        all_opportunities.append(opportunity)
+                    except Exception as e:
+                        print(f"⚠️ Skipped one card in {cat_name}: {e}")
+            except Exception as e:
+                print(f"❌ No opportunities found for category {cat_name}: {e}")
 
         except Exception as e:
-            print(f"❌ Could not scrape page {page}: {e}")
+            print(f"❌ Failed to load category {cat.text.strip()}: {e}")
 
     driver.quit()
     return all_opportunities
