@@ -113,7 +113,8 @@ def activity_command(message, user, sess_id, room_id):
             return {"error": f"LLM failure: {e}"}
 
         try:
-            selected_event = event_signups_collection.find_one({"_id": event_id})
+            cursor = event_signups_collection.find({"_id": event_id}).limit(1)
+            selected_event = next(cursor, None)
             if not selected_event:
                 print(f"Event with ID {event_id} not found in MongoDB.")
                 return {"error": "Event not found in the database"}
@@ -162,8 +163,6 @@ def activity_command(message, user, sess_id, room_id):
         except Exception as e:
             print(f"Error sending confirmation: {e}")
             return {"error": f"Unexpected error: {e}"}
-
-
 
 
 def confirm_command(message, user, room_id):

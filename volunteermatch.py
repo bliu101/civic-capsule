@@ -116,6 +116,14 @@ def scrape_volunteermatch_boston():
 #     driver.quit()
 #     return all_opportunities
 
+def wait_for_spinner_to_disappear(driver, timeout=10):
+    try:
+        WebDriverWait(driver, timeout).until_not(
+            EC.presence_of_element_located((By.CSS_SELECTOR, "div.spinner-mask__spinner"))
+        )
+    except:
+        print("⚠️ Spinner did not disappear in time — continuing anyway.")
+
 def stealth_scrape_volunteermatch():
     base_url = "https://www.volunteermatch.org/search/?l=Boston,%20MA,%20USA"
     options = uc.ChromeOptions()
@@ -143,9 +151,7 @@ def stealth_scrape_volunteermatch():
         driver.get(base_url)
         # time.sleep(5)
 
-        WebDriverWait(driver, 15).until_not(
-            EC.presence_of_element_located((By.CSS_SELECTOR, "div.spinner-mask__spinner"))
-        )
+        wait_for_spinner_to_disappear(driver)
 
         WebDriverWait(driver, 15).until(
             EC.element_to_be_clickable((By.CSS_SELECTOR, "li.causeareas button"))
@@ -161,8 +167,10 @@ def stealth_scrape_volunteermatch():
 
         categories = driver.find_elements(By.CSS_SELECTOR, "#cat_form .js-cat-cell")
         cat = categories[i]
+        print("CAT!!", cat)
         cat_id = cat.get_attribute("id").split("_")[-1]
-        cat_name = cat.text.strip()
+        svg = cat.find_element(By.CSS_SELECTOR, "svg")
+        cat_name = svg.get_attribute("title").strip()
         print(f"\n🌱 Scraping category: {cat_name} (ID: {cat_id})")
 
         # Visit the category page
