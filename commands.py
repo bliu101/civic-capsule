@@ -114,8 +114,8 @@ def activity_command(message, user, sess_id, room_id):
                 session_id=sess_id
             )
 
-            event_id = response.get("response", "").strip().replace('"', '').replace("'", "")
-            print("Resolved event ID:", event_id)
+            raw_id = response.get("response", "").strip().replace('"', '').replace("'", "")
+            print("Resolved event ID:", raw_id)
 
         except Exception as e:
             print(f"Error generating or parsing event summary: {e}")
@@ -125,7 +125,7 @@ def activity_command(message, user, sess_id, room_id):
         try:
             selected_event = community_collection.find_one({"_id": raw_id})
             if not selected_event:
-                print(f"Event with ID {event_id} not found in MongoDB.")
+                print(f"Event with ID {raw_id} not found in MongoDB.")
                 return {"error": "Event not found in the database"}
         except Exception as e:
             print(f"Invalid ObjectId or DB error: {e}")
@@ -136,7 +136,7 @@ def activity_command(message, user, sess_id, room_id):
         print(f"Adding user {room_id} to event signups for event: {event_title}")
 
         result = event_signups_collection.update_one(
-            {"event_id": event_id},
+            {"event_id": raw_id},
             {
                 "$setOnInsert": {"title": event_title},
                 "$addToSet": {"joined_users": room_id}
@@ -145,7 +145,7 @@ def activity_command(message, user, sess_id, room_id):
         )
         print("Signup update complete:", result.raw_result)
 
-        doc = event_signups_collection.find_one({"event_id": event_id})
+        doc = event_signups_collection.find_one({"event_id": raw_id})
         other_users = [rid for rid in doc["joined_users"] if rid != room_id]
         print(f"Found {len(other_users)} other users to notify")
 
