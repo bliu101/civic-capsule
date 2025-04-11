@@ -181,7 +181,7 @@ def details_complete(room_id, response_text, user, sess_id):
 
     if civic_event == 'community':
         matching_results = list(community_collection.find({
-            "category": category
+            "category": { "$regex": f"^{category}$", "$options": "i" }
         }).limit(5))
     
     print("MATCHING RESULTS: ", matching_results)

@@ -19,6 +19,7 @@ def activity_command(message, user, sess_id):
         session_id=sess_id
     )
     response_text = response['response']
+    print("PETITION SELECTED: ", response_text)
 
     payload = {
         "channel": f"@{user}",
