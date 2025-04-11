@@ -112,22 +112,19 @@ def activity_command(message, user, sess_id, room_id):
             print(f"Error generating or parsing event summary: {e}")
             return {"error": f"LLM failure: {e}"}
 
-        try:
-            if event_signups_collection.count_documents({"_id": event_id}, limit=1) == 0:
-                print(f"Event with ID {event_id} not found in MongoDB.")
-                return {"error": "Event not found in the database"}
-            selected_event = event_signups_collection.find_one({"_id": event_id})
-        except Exception as e:
-            print(f"Database lookup error for ID {event_id}: {e}")
-            return {"error": "DB lookup failed"}
 
-        event_title = selected_event["title"]
-        room_id = f"@{user}"
-        print(f"Adding user {room_id} to event signups for event: {event_title}")
+        selected_event = list(event_signups_collection.find({
+            "_id": event_id
+        }).limit(1))
+
+        if not selected_event:
+            print(f"No event found with ID: {event_id}")
+
+        print(f"Adding user {room_id} to event signups for event")
 
         event_signups_collection.update_one(
             {"event_id": event_id},
-            {"$setOnInsert": {"title": event_title}, "$addToSet": {"joined_users": room_id}},
+            {"$addToSet": {"joined_users": room_id}},
             upsert=True
         )
 
