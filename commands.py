@@ -94,9 +94,7 @@ def activity_command(message, user, sess_id, room_id):
         except Exception as e:
             return {"error": f"Unexpected error: {e}"}
 
-        selected_event = list(event_signups_collection.findone({
-            "title": event_title
-        }).limit(1))
+        selected_event = event_signups_collection.find_one({"title": event_title})
         print("SELECTED EVENT: ", selected_event)
 
 
