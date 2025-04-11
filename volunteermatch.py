@@ -135,6 +135,19 @@ def stealth_scrape_volunteermatch():
     category_elements = driver.find_elements(By.CSS_SELECTOR, "#cat_form .js-cat-cell")
     print(f"🔍 Found {len(category_elements)} categories.")
 
+    for i in range(len(category_elements)):
+        # Reopen the base page and refresh category list each time
+        driver.get(base_url)
+        time.sleep(5)
+        cause_button = driver.find_element(By.CSS_SELECTOR, "li.causeareas button")
+        cause_button.click()
+        time.sleep(2)
+        refreshed_categories = driver.find_elements(By.CSS_SELECTOR, "#cat_form .js-cat-cell")
+
+        cat = refreshed_categories[i]
+        cat_id = cat.get_attribute("id").split("_")[-1]
+        cat_name = cat.text.strip()
+
     all_opportunities = []
 
     for cat in category_elements:

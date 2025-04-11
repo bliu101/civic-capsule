@@ -13,7 +13,7 @@ def send_activity_suggestions(user):
     suggestions = [
         #("Local Elections", "🗳️"),
         ("Petitions", "📝"),
-        ("Community Events", "🎤")
+        ("Community Events", "🎤"),
         ("Volunteering Opportunities", "🤝"),
     ]
     
