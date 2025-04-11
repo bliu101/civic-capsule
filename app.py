@@ -199,7 +199,7 @@ def details_complete(room_id, response_text, user, sess_id):
         system=system_prompt,
         query=query,
         temperature=0.0,
-        lastk=1,
+        lastk=20,
         session_id=sess_id,
     )
 
