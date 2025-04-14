@@ -92,17 +92,18 @@ def activity_command(message, user, sess_id, room_id):
     
     if place == "events":
         print("User selected 'events'")
+ 
+        if event_signups_collection.find_one({"title": event_title}):
+            print("found")
+        
+        if not event_signups_collection.find_one({"title": event_title}):
+            print("not there")
 
-        # event_signups_collection = get_event_signups_collection()
-
-        # if event_signups_collection.find_one({"title": event_title}):
-        #     print("found")
-
-        # try:
-        #     event_signups_collection.insert_one({"event_title": event_title})
-        #     print(f"✅ Inserted: {event_title}")
-        # except Exception as e:
-        #     print(f"⚠️ Error inserting {event_title}: {e}")
+        try:
+            event_signups_collection.insert_one({"event_title": event_title})
+            print(f"✅ Inserted: {event_title}")
+        except Exception as e:
+            print(f"⚠️ Error inserting {event_title}: {e}")
 
         payload = {"channel": f"@{user}",
                    "text": response_text,
