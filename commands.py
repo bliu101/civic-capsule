@@ -91,14 +91,11 @@ def activity_command(message, user, sess_id, room_id):
             return {"error": f"Unexpected error: {e}"}
     
     if place == "events":
+        
         print("User selected 'events'")
  
         if event_signups_collection.find_one({"title": event_title}):
             print("found")
-        
-        if not event_signups_collection.find_one({"title": event_title}):
-            print("not there")
-
         try:
             event_signups_collection.insert_one({"event_title": event_title})
             print(f"✅ Inserted: {event_title}")
