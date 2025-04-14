@@ -11,9 +11,11 @@ from pymongo import MongoClient
 MONGO_URI = os.environ.get("MONGODB_URI")
 DB_NAME = os.environ.get("DB_NAME", "rocketchat")
 
-client = MongoClient(MONGO_URI, serverSelectionTimeoutMS=3000, socketTimeoutMS=3000)
+client = MongoClient(MONGO_URI)
+client_timeout = MongoClient(MONGO_URI, serverSelectionTimeoutMS=15000, socketTimeoutMS=15000)
 db = client[DB_NAME]
-event_signups_collection = db["event_signups"]
+db_timeout = client_timeout[DB_NAME]
+event_signups_collection = db_timeout["event_signups"]
 
 # Rocket.Chat API endpoint
 API_BASE_URL = "https://chat.genaiconnect.net/api/v1"
