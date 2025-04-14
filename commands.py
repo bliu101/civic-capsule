@@ -11,7 +11,7 @@ from pymongo import MongoClient
 MONGO_URI = os.environ.get("MONGODB_URI")
 DB_NAME = os.environ.get("DB_NAME", "rocketchat")
 
-client = MongoClient(MONGO_URI)
+client = MongoClient(MONGO_URI, serverSelectionTimeoutMS=3000, socketTimeoutMS=3000)
 db = client[DB_NAME]
 event_signups_collection = db["event_signups"]
 
@@ -93,18 +93,23 @@ def activity_command(message, user, sess_id, room_id):
     if place == "events":
         
         print("User selected 'events'")
+        try:
+            client.admin.command("ping")
+            print("✅ MongoDB is reachable.")
+        except Exception as e:
+            print(f"❌ MongoDB connection issue: {e}")
 
         print(event_signups_collection)
         print(type(event_signups_collection))
  
-        if event_signups_collection.find_one({"title": event_title}):
-            print("found")
-
-        try:
-            event_signups_collection.insert_one({"event_title": event_title})
-            print(f"✅ Inserted: {event_title}")
-        except Exception as e:
-            print(f"⚠️ Error inserting {event_title}: {e}")
+        if not event_signups_collection.find_one({"event_title": event_title}):
+            try:
+                event_signups_collection.insert_one({"event_title": event_title})
+                print(f"✅ Inserted: {event_title}")
+            except Exception as e:
+                print(f"⚠️ Error inserting {event_title}: {e}")
+        else:
+            print(f"⚠️ Duplicate not inserted: {event_title}")
 
         payload = {"channel": f"@{user}",
                    "text": response_text,
