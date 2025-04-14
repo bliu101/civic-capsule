@@ -93,9 +93,13 @@ def activity_command(message, user, sess_id, room_id):
     if place == "events":
         
         print("User selected 'events'")
+
+        print(event_signups_collection)
+        print(type(event_signups_collection))
  
         if event_signups_collection.find_one({"title": event_title}):
             print("found")
+
         try:
             event_signups_collection.insert_one({"event_title": event_title})
             print(f"✅ Inserted: {event_title}")
