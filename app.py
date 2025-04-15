@@ -130,7 +130,7 @@ def main():
         "Your goal is to obtain all of the following detail from the user: first, civic engagement opportunities "
         "The options are local election info, petitions, community events, volunteering opportunities. Second, "
         "civic engagement interests. ex: environment, civic learning, education, healthcare, social justice. " \
-        "If the user chose 'community events', the only civic engagement interests are 'civic learning', 'social good', and 'environment'."
+        "If the user chose 'community events', the only civic engagement interests are 'civic engagement', 'social good', 'learning and lectures', and 'environment'."
         "If any one of these details is missing, ask a clear and direct question for that specific missing detail. "
         "Do not produce a final summary until you have all the required details. "
         "If the user inputs information that they have already given (changed their mind), rewrite over the previous information for that specific detail, but remember the other detials."
@@ -139,7 +139,7 @@ def main():
         "Always remember what has been discussed, to revisit later or in case user changes activity."
         f"This is the user's next message: {message}"
 
-        "If follow up questions are received, and you already have an event that they had chosen, answer the questions" \
+        "If follow up questions are received on an event, and you already have an event that they had chosen, answer the questions" \
         "they have based on the event that they chose and the information that you have on it. " \
 
         "Do not ask for clarification for information that you have already received."
