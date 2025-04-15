@@ -9,7 +9,7 @@ from zoneinfo import ZoneInfo
 
 from buttons import send_activity_suggestions, send_place_options
 from agents import agent_detect_intent, agent_interest_category, agent_civic_category
-from commands import activity_command, confirm_command, is_valid_username, regenerate_summary, send_plan_to_friend
+from commands import activity_command, confirm_command, is_valid_username, regenerate_summary, send_plan_to_friend, join_event_command
 
 from dotenv import load_dotenv
 from pymongo import MongoClient
@@ -113,6 +113,12 @@ def main():
         confirm_command(message, user, room_id)
         print("========CONFIRM_COMMAND DONE========")
         return jsonify({"status": "valid_confirmation"})
+    
+    if message.startswith("!join_event"):
+        print("========JOIN_EVENT START========")
+        join_event_command(message, user, room_id, sess_id)
+        print("========JOIN_EVENT DONE========")
+        return jsonify({"status": "event_joined"})
 
     intent_num = agent_detect_intent(message).strip()
     if intent_num == '1':

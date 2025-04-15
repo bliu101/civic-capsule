@@ -98,133 +98,167 @@ def activity_command(message, user, sess_id, room_id):
         
         print("User selected 'events'")
         try:
-            client_timeout.admin.command("ping")
-            print("✅ MongoDB is reachable.")
+            existing_event = event_signups_collection.find_one({"event_title": event_title})
+            if not existing_event:
+                # No one registered yet
+                attendees = []
+            else:
+                attendees = existing_event.get("attendees", [])
+
+            # Compose attendee list message
+            attendee_usernames = [att["username"] for att in attendees]
+            if attendee_usernames:
+                attendee_text = "People going to this event so far:\n" + "\n".join(f"• @{name}" for name in attendee_usernames)
+            else:
+                attendee_text = "No one has signed up yet."
+
         except Exception as e:
-            print(f"❌ MongoDB connection issue: {e}")
+            print(f"❌ MongoDB lookup failed: {e}")
+            attendee_text = "Unable to load signups right now."
 
-        print(event_signups_collection)
-        print(type(event_signups_collection))
- 
-        if not event_signups_collection.find_one({"event_title": event_title}):
-            try:
-                event_signups_collection.update_one({"event_title": event_title})
-                print(f"✅ Inserted: {event_title}")
-            except Exception as e:
-                print(f"⚠️ Error inserting {event_title}: {e}")
-        else:
-            print(f"⚠️ Duplicate not inserted: {event_title}")
 
-        payload = {"channel": f"@{user}",
-                   "text": response_text,
-                   "attachments": [
+        payload = {
+            "channel": f"@{user}",
+            "text": f"{response_text}\n\n{attendee_text}",
+            "attachments": [
+                {
+                    "text": "Would you like to join this event?",
+                    "actions": [
                         {
-                            "text": "Please click the link to register for the event! Would you like to send this petition to other users?",
-                            "actions": [
-                                {
-                                    "type": "button", 
-                                    "text": "✅ Yes",
-                                    "msg": f"!confirm {user} yes",
-                                    "msg_in_chat_window": True
-                                },
-                                {
-                                    "type": "button",
-                                    "text": "❌ No",
-                                    "msg": f"!confirm {user} no",
-                                    "msg_in_chat_window": True
-                                }
-                            ]
+                            "type": "button", 
+                            "text": "✅ Yes, I'm going!",
+                            "msg": f"!join_event {event_title}",
+                            "msg_in_chat_window": True
+                        },
+                        {
+                            "type": "button",
+                            "text": "❌ No thanks",
+                            "msg": f"!decline_event {event_title}",
+                            "msg_in_chat_window": True
                         }
                     ]
-                   }
-        try:
-            response = requests.post(ROCKETCHAT_URL, json=payload, headers=HEADERS)
-            response.raise_for_status()
-        except Exception as e:
-            return {"error": f"Unexpected error: {e}"}
-        
-        system_message = (
-                "You are an assistant that generates iCalendar (ICS) documents based on previous conversation context. " 
-                "Your output must be a valid ICS file conforming to RFC 5545, " 
-                "and include only the ICS content without any additional commentary or explanation. " 
-                "Ensure you include mandatory fields such as BEGIN:VCALENDAR, VERSION, PRODID, BEGIN:VEVENT, UID, DTSTAMP, " 
-                "DTSTART, DTEND, and SUMMARY."
-                "Note that no line length should exceed 75 characters."
-            )
-        query = (f"""
-                Using the previously generated event summary from our conversation context, generate a complete and valid iCalendar (ICS) document
-                that reflects the event details.
-                Name the calendar event based on the activity/place found in the summary.
-                Set the location of the calendar event to the address of the location in the summary.
-                Set the time of the calendar event to the time of the hangout, using the current date as reference.
-                Keep the description brief (less than 60 characters) to comply with ICS file format.
-                Output only the ICS content with no extra text.
-                Follow valid ICS file format.
-                """)
-        response = generate(
-            model='4o-mini',
-            system= system_message,
-            query= query,
-            temperature=0.0,
-            lastk=20,
-            session_id=sess_id
-        )
-        ical_content = response.get('response').strip()
-        if ical_content.startswith("```") and ical_content.endswith("```"):
-            ical_content = ical_content[3:-3].strip()
-        print("Generated ICS content:")
-        print(ical_content)
-
-        # Define the upload URL (same for all uploads)
-        print("Room ID for file upload:", room_id)
-        upload_url = f"{API_BASE_URL}/rooms.upload/{room_id}"
-        print("Constructed upload URL:", upload_url)
-
-        # Write the ICS content to a file
-        ics_filename = "event.ics"
-        print(f"Writing ICS content to file: {ics_filename}")
-        ics_content = ical_content.replace("\n", "\r\n")
-        ics_content = ics_content.strip()
-
-        lines = ics_content.split("\n")
-        cleaned_lines = [line.rstrip() for line in lines]  # Remove trailing whitespace from each line
-        ics_content = "\r\n".join(cleaned_lines)
-
-        try:
-            with open(ics_filename, "w") as f:
-                f.write(ics_content)
-            print("ICS file written successfully.")
-        except Exception as e:
-            print(f"Error writing ICS file: {e}")
-
-        # Read and print the ICS file contents
-        try:
-            with open(ics_filename, "r") as f:
-                file_contents = f.read()
-            print("ICS file contents:")
-            print(file_contents)
-        except Exception as e:
-            print(f"Error reading ICS file: {e}")
+                }
+            ]
+        }
 
 
-        # Prepare the file for upload
-        try:
-            files = {'file': (os.path.basename(ics_filename), open(ics_filename, "rb"), "text/calendar")}
-            data = {'description': 'Here is a calendar invitation with your plan!'}
-            print("About to send file upload POST request with data:", data)
-            print("Headers being used:", HEADERS)
-            response_upload = requests.post(upload_url, headers=upload_headers, data=data, files=files)
-            print("File upload response status code:", response_upload.status_code)
-            print("File upload response text:", response_upload.text)
-            if response_upload.status_code == 200:
-                print(f"File {ics_filename} has been sent to {user}.")
-            else:
-                print(f"Failed to send file to {user}. Error: {response_upload.text}")
-        except Exception as e:
-            print(f"An exception occurred during file upload: {e}")
+def join_event_command(message, user, room_id, sess_id):
+    print("JOIN_EVENT_COMMAND")
+    print("Message:", message)
+    parts = message.split(maxsplit=1)
+    if len(parts) < 2:
+        return {"error": "Event title missing"}
+
+    event_title = parts[1]
+
+    try:
+        event_doc = event_signups_collection.find_one({"event_title": event_title})
+        if not event_doc:
+            event_signups_collection.insert_one({
+                "event_title": event_title,
+                "attendees": [{"username": user, "room_id": room_id}]
+            })
+        else:
+            # Avoid duplicate usernames
+            existing_usernames = [a["username"] for a in event_doc.get("attendees", [])]
+            if user not in existing_usernames:
+                event_signups_collection.update_one(
+                    {"event_title": event_title},
+                    {"$addToSet": {"attendees": {"username": user, "room_id": room_id}}}
+                )
+
+        # Send confirmation
+        payload = {
+            "channel": f"@{user}",
+            "text": f"🎉 You’ve been added to '{event_title}'! We’ll keep you in the loop with others going! Add the event to your calendar:"
+        }
+        requests.post(ROCKETCHAT_URL, json=payload, headers=HEADERS)
+        create_calendar_event(sess_id, room_id, user)
+
+    except Exception as e:
+        print(f"Error joining event: {e}")
+
+def create_calendar_event(sess_id, room_id, user):
+    print("Creating calendar event...")
+    system_message = (
+        "You are an assistant that generates iCalendar (ICS) documents based on previous conversation context. " 
+        "Your output must be a valid ICS file conforming to RFC 5545, " 
+        "and include only the ICS content without any additional commentary or explanation. " 
+        "Ensure you include mandatory fields such as BEGIN:VCALENDAR, VERSION, PRODID, BEGIN:VEVENT, UID, DTSTAMP, " 
+        "DTSTART, DTEND, and SUMMARY."
+        "Note that no line length should exceed 75 characters."
+    )
+    query = (f"""
+            Using the previously generated event summary from our conversation context, generate a complete and valid iCalendar (ICS) document
+            that reflects the event details.
+            Name the calendar event based on the activity/place found in the summary.
+            Set the location of the calendar event to the address of the location in the summary.
+            Set the time of the calendar event to the time of the hangout, using the current date as reference.
+            Keep the description brief (less than 60 characters) to comply with ICS file format.
+            Output only the ICS content with no extra text.
+            Follow valid ICS file format.
+            """)
+    response = generate(
+        model='4o-mini',
+        system= system_message,
+        query= query,
+        temperature=0.0,
+        lastk=20,
+        session_id=sess_id
+    )
+    ical_content = response.get('response').strip()
+    if ical_content.startswith("```") and ical_content.endswith("```"):
+        ical_content = ical_content[3:-3].strip()
+    print("Generated ICS content:")
+    print(ical_content)
+
+    # Define the upload URL (same for all uploads)
+    print("Room ID for file upload:", room_id)
+    upload_url = f"{API_BASE_URL}/rooms.upload/{room_id}"
+    print("Constructed upload URL:", upload_url)
+
+    # Write the ICS content to a file
+    ics_filename = "event.ics"
+    print(f"Writing ICS content to file: {ics_filename}")
+    ics_content = ical_content.replace("\n", "\r\n")
+    ics_content = ics_content.strip()
+
+    lines = ics_content.split("\n")
+    cleaned_lines = [line.rstrip() for line in lines]  # Remove trailing whitespace from each line
+    ics_content = "\r\n".join(cleaned_lines)
+
+    try:
+        with open(ics_filename, "w") as f:
+            f.write(ics_content)
+        print("ICS file written successfully.")
+    except Exception as e:
+        print(f"Error writing ICS file: {e}")
+
+    # Read and print the ICS file contents
+    try:
+        with open(ics_filename, "r") as f:
+            file_contents = f.read()
+        print("ICS file contents:")
+        print(file_contents)
+    except Exception as e:
+        print(f"Error reading ICS file: {e}")
 
 
-
+    # Prepare the file for upload
+    try:
+        files = {'file': (os.path.basename(ics_filename), open(ics_filename, "rb"), "text/calendar")}
+        data = {'description': 'Here is a calendar invitation with your plan!'}
+        print("About to send file upload POST request with data:", data)
+        print("Headers being used:", HEADERS)
+        response_upload = requests.post(upload_url, headers=upload_headers, data=data, files=files)
+        print("File upload response status code:", response_upload.status_code)
+        print("File upload response text:", response_upload.text)
+        if response_upload.status_code == 200:
+            print(f"File {ics_filename} has been sent to {user}.")
+        else:
+            print(f"Failed to send file to {user}. Error: {response_upload.text}")
+    except Exception as e:
+        print(f"An exception occurred during file upload: {e}")
 
 def confirm_command(message, user, room_id):
     parts = message.split()
