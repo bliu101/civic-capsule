@@ -98,12 +98,16 @@ def activity_command(message, user, sess_id, room_id):
     if place == "events":
         
         print("User selected 'events'")
+
+        print("attempting to get event signups collection")
         try:
+            print("looking for existing results")
             existing_event = event_signups_collection.find_one({"event_title": event_title})
             if not existing_event:
-                # No one registered yet
+                print("no one registered")
                 attendees = []
             else:
+                print("found attendees")
                 attendees = existing_event.get("attendees", [])
 
             # Compose attendee list message
@@ -141,6 +145,13 @@ def activity_command(message, user, sess_id, room_id):
                 }
             ]
         }
+        try:
+            response = requests.post(ROCKETCHAT_URL, json=payload, headers=HEADERS)
+            response.raise_for_status()
+            print("✅ Event prompt sent to user.")
+        except Exception as e:
+            print(f"❌ Failed to send event message: {e}")
+
 
 
 def join_event_command(message, user, room_id, sess_id):
