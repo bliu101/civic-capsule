@@ -96,7 +96,7 @@ def activity_command(message, user, sess_id, room_id):
         
         print("User selected 'events'")
         try:
-            client.admin.command("ping")
+            client_timeout.admin.command("ping")
             print("✅ MongoDB is reachable.")
         except Exception as e:
             print(f"❌ MongoDB connection issue: {e}")
