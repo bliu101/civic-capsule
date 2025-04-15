@@ -5,8 +5,10 @@ import os
 from flask import Flask, request, jsonify, session
 from bson import ObjectId
 
-
+from dotenv import load_dotenv
 from pymongo import MongoClient
+
+load_dotenv()
 
 MONGO_URI = os.environ.get("MONGODB_URI")
 DB_NAME = os.environ.get("DB_NAME", "rocketchat")
@@ -106,7 +108,7 @@ def activity_command(message, user, sess_id, room_id):
  
         if not event_signups_collection.find_one({"event_title": event_title}):
             try:
-                event_signups_collection.insert_one({"event_title": event_title})
+                event_signups_collection.update_one({"event_title": event_title})
                 print(f"✅ Inserted: {event_title}")
             except Exception as e:
                 print(f"⚠️ Error inserting {event_title}: {e}")
