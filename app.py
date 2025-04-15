@@ -139,6 +139,9 @@ def main():
         "Always remember what has been discussed, to revisit later or in case user changes activity."
         f"This is the user's next message: {message}"
 
+        "If follow up questions are received, and you already have an event that they had chosen, answer the questions" \
+        "they have based on the event that they chose and the information that you have on it. " \
+
         "Do not ask for clarification for information that you have already received."
 
     )
