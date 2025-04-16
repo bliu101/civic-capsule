@@ -12,7 +12,7 @@ def agent_detect_intent(query):
                 Respond with a single number and just a single number. Respond with '1'
                 if the user is greeting or asking 'what do you do?'.
                 If the user is asking what can be done at a civic engagement opportunity, or
-                anything not related to what you do, return '2'.
+                anything not along the lines of 'what do you do?', return '2'.
                 In all other scenarios, return '2'.
 
                 Be very sparing in returning '1', in most instances you will return '2'
