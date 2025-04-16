@@ -391,7 +391,7 @@ def format_data(sess_id, db_result, user, event_type):
         model = '4o-mini',
         system = system_message,
         query = (
-            f'''The following list of activities was generated from a database call: {api_result.json()}.
+            f'''The following list of activities was generated from a database call: {db_result}.
             Only print the first 4 to start (if there are 4).
             Please format the output so that:
                 - The first line is only the count of items in the list in total (the amount of item that resulted from the API call). No other information or text on this line. Just the number.
