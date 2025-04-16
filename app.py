@@ -9,7 +9,7 @@ from zoneinfo import ZoneInfo
 
 from buttons import send_activity_suggestions, send_place_options
 from agents import agent_detect_intent, agent_interest_category, agent_civic_category
-from commands import activity_command, confirm_command, is_valid_username, regenerate_summary, send_plan_to_friend, join_event_command
+from commands import activity_command, confirm_command, is_valid_username, regenerate_summary, send_plan_to_friend, join_event_command, format_data
 
 from dotenv import load_dotenv
 from pymongo import MongoClient
@@ -137,10 +137,12 @@ def main():
         "Do not ask for clarification for information that you have already received."
         "Only when all details are provided, respond with exactly: 'All necessary details completed:' followed by a summary of the plan. "
         "Always remember what has been discussed, to revisit later or in case user changes activity."
-        f"This is the user's next message: {message}"
 
-        "If follow up questions are received on an event, and you already have an event that they had chosen, answer the questions" \
-        "they have based on the event that they chose and the information that you have on it. " \
+        "If follow up questions are received on an event, check whether a specific event (e.g., a specific petition or specific" \
+        "community engaggement activity) from a list of events has been chosen by the user (from your chat history). If it has," \
+        "answer follow up questions based on that event." \
+        
+        f"This is the user's next message: {message}"
 
         "Do not ask for clarification for information that you have already received."
 
@@ -209,44 +211,20 @@ def details_complete(room_id, response_text, user, sess_id):
     if civic_event == 'petitions':
         matching_results = list(petitions_collection.find({
             "categories": category
-        }).limit(5))
+        }).limit(10))
 
     if civic_event == 'events':
         matching_results = list(community_collection.find({
             "category": { "$regex": f"^{category}$", "$options": "i" }
-        }).limit(5))
+        }).limit(10))
         result_ids = [event["title"].replace(" ", "") for event in matching_results]
         
         print("RESULT IDS: ", result_ids)
     
     print("MATCHING RESULTS: ", matching_results)
+    format_data(sess_id=sess_id, db_result=matching_results,user=user, event_type=civic_event, category=category, result_ids=result_ids)
+
         
-    query = (
-        f'''
-        Here is information {matching_results} of the matching civic engagement opportunities.
-        Print it out in a readable way.
-        '''
-    )
-
-    system_prompt = """
-    Be friendly and give human readable text. Remember the output of this query for future reference.
-    Add emojis where appropriate.
-    """
-
-    response = generate(
-        model='4o-mini',
-        system=system_prompt,
-        query=query,
-        temperature=0.0,
-        lastk=20,
-        session_id=sess_id,
-    )
-
-    response_text = response.get('response', '').strip()
-    print(response_text)
-
-    num_options = 5 #agent_determine_number(response_text)
-    send_place_options(num_options, user, response_text, civic_event, result_ids)
 
     # return response_text
 

@@ -5,6 +5,8 @@ import os
 from flask import Flask, request, jsonify, session
 from bson import ObjectId
 
+from buttons import send_place_options
+
 from dotenv import load_dotenv
 from pymongo import MongoClient
 
@@ -374,3 +376,56 @@ def send_plan_to_friend(friend_username, username, plan_text):
         # Handle any other unexpected errors
         print(f"An unexpected error occurred while sending message to {username}: {e}")
         return {"error": f"Unexpected error: {e}"}
+
+def format_data(sess_id, db_result, user, event_type):
+    system_message = (
+        """You are a friendly assistant that formats database responses as a catalog of choices.
+        Given a list of activities, output:
+        1. On the first line, list the number of results the API returned.
+        3. On the following lines, list each option on its own line and the details.
+        Do not include any extra commentary or headings.
+        Make sure to delimit each line with a single (one) newline. Do not add additional unnecessary newline characters.
+        Format everything nicely"""
+    )
+    response = generate(
+        model = '4o-mini',
+        system = system_message,
+        query = (
+            f'''The following list of activities was generated from a database call: {api_result.json()}.
+            Only print the first 4 to start (if there are 4).
+            Please format the output so that:
+                - The first line is only the count of items in the list in total (the amount of item that resulted from the API call). No other information or text on this line. Just the number.
+                - Immediately after a newline, starting on the second line, list the options with all relevant details and a description.
+            Only include the options provided and nothing else.
+            Make sure to delimit each line with a single (one) newline. Do not add additional unnecessary newline characters.
+            In subsequent requests, refer to these items for any follow-up actions.
+            Right now, just show the first 4. Only show more when requested to.'''
+        ),
+        temperature=0.3,
+        lastk=20,
+        session_id=sess_id
+    )
+    response_text = response['response']
+
+    print('nonstripped list')
+    print(response_text)
+
+    # parts = response_text.split()
+    # responses_no = int(parts[0])
+    lines = response_text.splitlines()
+    clean_lines = [line.strip() for line in response_text.splitlines() if line.strip()]
+    print('LINES:', lines)
+    responses_no = int(lines[0].strip())
+    options = []
+    # Reassemble the output without the first line (the number and its newline)
+    if len(lines) > 1:
+        print('IN LINES IF STATEMENT')
+        options = [opt.strip() for opt in clean_lines[1].split(',')]
+        response_text = "\n".join(lines[2:])
+    else:
+        response_text = ""
+    print('LIST OF PLACES GENERATED')
+    print(response_text)
+
+    rocketchat_response = send_place_options(parts=responses_no, options=options, username=user, text=response_text)
+    return jsonify({"status": "redo_search"})
