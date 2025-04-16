@@ -107,6 +107,13 @@ def main():
         print("========HANDLE_SHOW_MORE DONE========")
         # return jsonify({"text": response_text})
         return jsonify({"status": "show_more_handled"})
+    
+    # if message.startswith("!more"):
+    #     print("========HANDLE_SHOW_MORE START========")
+    #     show_more_options(user, sess_id,)
+    #     print("========HANDLE_SHOW_MORE DONE========")
+    #     # return jsonify({"text": response_text})
+    #     return jsonify({"status": "show_more_handled"})
 
     if message.startswith("!confirm"):
         print("========CONFIRM_COMMAND START========")
@@ -222,7 +229,7 @@ def details_complete(room_id, response_text, user, sess_id):
         print("RESULT IDS: ", result_ids)
     
     print("MATCHING RESULTS: ", matching_results)
-    format_data(sess_id=sess_id, db_result=matching_results,user=user, event_type=civic_event, category=category, result_ids=result_ids)
+    format_data(sess_id=sess_id, db_result=matching_results,user=user, event_type=civic_event, result_ids=result_ids)
 
         
 
