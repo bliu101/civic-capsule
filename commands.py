@@ -426,5 +426,5 @@ def format_data(sess_id, db_result, user, event_type):
     print('LIST OF PLACES GENERATED')
     print(response_text)
 
-    rocketchat_response = send_place_options(num=responses_no, options=options, username=user, text=response_text)
+    rocketchat_response = send_place_options(responses_no, user, options, event_type, response_text)
     return jsonify({"status": "redo_search"})
