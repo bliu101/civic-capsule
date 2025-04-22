@@ -410,8 +410,6 @@ def format_data(sess_id, db_result, user, event_type):
     print('nonstripped list')
     print(response_text)
 
-    # parts = response_text.split()
-    # responses_no = int(parts[0])
     lines = response_text.splitlines()
     clean_lines = [line.strip() for line in response_text.splitlines() if line.strip()]
     print('LINES:', lines)
@@ -421,6 +419,7 @@ def format_data(sess_id, db_result, user, event_type):
     if len(lines) > 1:
         print('IN LINES IF STATEMENT')
         options = [opt.strip() for opt in clean_lines[1].split(',')]
+        print(options)
         response_text = "\n".join(lines[2:])
     else:
         response_text = ""

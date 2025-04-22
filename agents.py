@@ -9,10 +9,11 @@ def agent_detect_intent(query):
     query = (f"""
                 You are determining whether the user is starting a chat by greeting or asking what can be done. 
                 Analyze the following message: {query}.
-                Respond with a single number and just a single number. Respond with '1'
-                if the user is greeting or asking 'what do you do?'.
+                Respond with a single number and just a single number. 
+                If the user is greeting, asking 'what do you do?', or asking about information on the chatbot.
+                Respond with '1'
                 If the user is asking what can be done at a civic engagement opportunity, or
-                anything not along the lines of 'what do you do?', return '2'.
+                anything not along the lines of 'what do you do?' return '2'.
                 In all other scenarios, return '2'.
 
                 Be very sparing in returning '1', in most instances you will return '2'
@@ -22,7 +23,7 @@ def agent_detect_intent(query):
         system=(
             "You are an intent detection assistant. "
             "Analyze the following user message and return a single number: "
-            "return '1' if the user is greeting or questioning your purpose, and '2' otherwise." 
+            "return '1' if the user is greeting or has a question about the chatbot, and '2' otherwise." 
             "Be very sparing in returning '1', in most instances you will return '2'"       
         ),
         query=query,
