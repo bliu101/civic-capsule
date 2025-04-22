@@ -51,7 +51,7 @@ def activity_command(message, user, sess_id, room_id):
         model = '4o-mini',
         system = 'Give human readable text and be friendly',
         query = (
-            f"""There is a previously generated API list of petitions.
+            f"""There is a previously generated API list of petitions or events (discern which it is from the messages).
             The user selected the #{number} place from that list.
             Please provide a detailed, human-readable summary of this event."""                    
         ),
@@ -168,29 +168,52 @@ def join_event_command(message, user, room_id, sess_id):
     try:
         event_doc = event_signups_collection.find_one({"event_title": event_title})
         if not event_doc:
+            # First person to join
             event_signups_collection.insert_one({
                 "event_title": event_title,
                 "attendees": [{"username": user, "room_id": room_id}]
             })
+            attendees_to_notify = []
         else:
-            # Avoid duplicate usernames
-            existing_usernames = [a["username"] for a in event_doc.get("attendees", [])]
+            # Get current attendees
+            attendees = event_doc.get("attendees", [])
+            existing_usernames = [a["username"] for a in attendees]
+
             if user not in existing_usernames:
                 event_signups_collection.update_one(
                     {"event_title": event_title},
                     {"$addToSet": {"attendees": {"username": user, "room_id": room_id}}}
                 )
+                attendees_to_notify = [a for a in attendees if a["username"] != user]
+            else:
+                print(f"User {user} already registered.")
+                attendees_to_notify = []
 
-        # Send confirmation
+        # Confirmation to the user
         payload = {
             "channel": f"@{user}",
             "text": f"🎉 You’ve been added to '{event_title}'! We’ll keep you in the loop with others going! Add the event to your calendar:"
         }
         requests.post(ROCKETCHAT_URL, json=payload, headers=HEADERS)
+
+        # Send them an ICS file
         create_calendar_event(sess_id, room_id, user)
+
+        # Notify existing attendees
+        for attendee in attendees_to_notify:
+            notify_payload = {
+                "channel": f"@{attendee['username']}",
+                "text": f"👋 @{user} just joined the event **'{event_title}'**! 🎉"
+            }
+            try:
+                requests.post(ROCKETCHAT_URL, json=notify_payload, headers=HEADERS)
+                print(f"Notified {attendee['username']} that {user} joined.")
+            except Exception as e:
+                print(f"Failed to notify {attendee['username']}: {e}")
 
     except Exception as e:
         print(f"Error joining event: {e}")
+
 
 def create_calendar_event(sess_id, room_id, user):
     print("Creating calendar event...")
