@@ -10,10 +10,10 @@ def agent_detect_intent(query):
                 You are determining whether the user is starting a chat by greeting or asking what can be done. 
                 Analyze the following message: {query}.
                 Respond with a single number and just a single number. 
-                If the user is greeting, asking 'what do you do?', or asking about information on the chatbot.
+                If the user is greeting or asking about information on the chatbot.
                 Respond with '1'
-                If the user is asking what can be done at a civic engagement opportunity, or
-                anything not along the lines of 'what do you do?' return '2'.
+                If the user is wants more information civic engagement opportunity or anything
+                not related to the chatbot itself, return '2'.
                 In all other scenarios, return '2'.
 
                 Be very sparing in returning '1', in most instances you will return '2'
