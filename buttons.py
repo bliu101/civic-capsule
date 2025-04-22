@@ -90,6 +90,10 @@ def use_skills(user):
         return {"error": f"Unexpected error: {e}"}
 
 def send_place_options(num, username, options, event_type, text):
+    min_num = 4
+    if num < 4:
+        min_num = num
+
     print("IN SEND PLACE OPTIONS")
     print("TEXT: ,", text)
     """Send a message with the place options as buttons."""
@@ -99,7 +103,7 @@ def send_place_options(num, username, options, event_type, text):
     }
 
     actions = []
-    for n in range(1, num + 1):
+    for n in range(1, min_num + 1):
         id = ""
         print('IN THE FOR LOOPS FOR OPTIONS')
         actions.append({
