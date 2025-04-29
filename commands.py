@@ -214,7 +214,6 @@ def join_event_command(message, user, room_id, sess_id):
     except Exception as e:
         print(f"Error joining event: {e}")
 
-
 def create_calendar_event(sess_id, room_id, user):
     print("Creating calendar event...")
     system_message = (
@@ -292,6 +291,32 @@ def create_calendar_event(sess_id, room_id, user):
         print("File upload response text:", response_upload.text)
         if response_upload.status_code == 200:
             print(f"File {ics_filename} has been sent to {user}.")
+        else:
+            print(f"Failed to send file to {user}. Error: {response_upload.text}")
+    except Exception as e:
+        print(f"An exception occurred during file upload: {e}")
+
+
+def send_event_images(sess_id, room_id, user):
+    print("Sending images")
+    image_filename = "civic-capsule/2025-BOSTON-CITIZENSHIP-DAY-PHOTOS_AVERY-FARMER-18-970x647.jpg"
+    
+    # Define the upload URL (same for all uploads)
+    print("Room ID for file upload:", room_id)
+    upload_url = f"{API_BASE_URL}/rooms.upload/{room_id}"
+    print("Constructed upload URL:", upload_url)
+
+    # Prepare the file for upload
+    try:
+        files = {'file': (os.path.basename(image_filename), open(image_filename, "rb"))}
+        data = {'description': 'Here are some pictures from the event!'}
+        print("About to send file upload POST request with data:", data)
+        print("Headers being used:", HEADERS)
+        response_upload = requests.post(upload_url, headers=upload_headers, data=data, files=files)
+        print("File upload response status code:", response_upload.status_code)
+        print("File upload response text:", response_upload.text)
+        if response_upload.status_code == 200:
+            print(f"File {image_filename} has been sent to {user}.")
         else:
             print(f"Failed to send file to {user}. Error: {response_upload.text}")
     except Exception as e:

@@ -9,7 +9,7 @@ from zoneinfo import ZoneInfo
 
 from buttons import send_activity_suggestions, send_place_options
 from agents import agent_detect_intent, agent_interest_category, agent_civic_category
-from commands import activity_command, confirm_command, is_valid_username, regenerate_summary, send_plan_to_friend, join_event_command, format_data
+from commands import activity_command, confirm_command, is_valid_username, regenerate_summary, send_plan_to_friend, join_event_command, format_data, send_event_images
 
 from dotenv import load_dotenv
 from pymongo import MongoClient
@@ -104,6 +104,14 @@ def main():
     if message.startswith("!place"):
         print("========HANDLE_SHOW_MORE START========")
         activity_command(message, user, sess_id, room_id=room_id)
+        
+        print("========HANDLE_SHOW_MORE DONE========")
+        # return jsonify({"text": response_text})
+        return jsonify({"status": "show_more_handled"})
+    
+    if message.startswith("!photo"):
+        print("========HANDLE_SHOW_MORE START========")
+        send_event_images(sess_id, room_id, user)
         
         print("========HANDLE_SHOW_MORE DONE========")
         # return jsonify({"text": response_text})
