@@ -23,6 +23,7 @@ client = MongoClient(MONGO_URI)
 db = client[DB_NAME]
 petitions_collection = db["moveon_petitions"]
 community_collection = db["events"]
+citizenship_collection = db["citizenshipday"]
 
 app = Flask(__name__)
 session_id = "CivicCapsule-"
@@ -158,7 +159,7 @@ def main():
         """
         You are Civic Capsule, a helpful and friendly civic engagement assistant. 
         You help users discover local events, learn about civic opportunities, and take meaningful action in their community. 
-        You specialize in making local government, voting, and volunteering easy to understand and act on. 
+        You specialize in making local events and petitions easy to understand and act on. 
         You're especially good at surfacing things users can do right now, based on what they care about.
 
         Never assume the user knows civic jargon. Be concise, inclusive, and kind. 
@@ -224,17 +225,17 @@ def details_complete(room_id, response_text, user, sess_id):
         matching_results = list(community_collection.find({
             "category": { "$regex": f"^{category}$", "$options": "i" }
         }).limit(10))
-        result_ids = [event["title"].replace(" ", "") for event in matching_results]
+
+        citizenship_doc = citizenship_collection.find_one()
+        if citizenship_doc:
+            matching_results.insert(0, citizenship_doc)
+
+        result_ids = [event["title"].replace(" ", "") for event in matching_results if "title" in event]
         
         print("RESULT IDS: ", result_ids)
     
     print("MATCHING RESULTS: ", matching_results)
     format_data(sess_id=sess_id, db_result=matching_results,user=user, event_type=civic_event)
-
-        
-
-    # return response_text
-
 
 @app.errorhandler(404)
 def page_not_found(e):
