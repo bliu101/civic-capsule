@@ -299,7 +299,7 @@ def create_calendar_event(sess_id, room_id, user):
 
 def send_event_images(sess_id, room_id, user):
     print("Sending images")
-    image_filename = "civic-capsule/2025-BOSTON-CITIZENSHIP-DAY-PHOTOS_AVERY-FARMER-18-970x647.jpg"
+    image_filename = "citizenship_day.jpg"
     
     # Define the upload URL (same for all uploads)
     print("Room ID for file upload:", room_id)
