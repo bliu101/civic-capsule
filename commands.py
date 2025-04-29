@@ -308,8 +308,8 @@ def send_event_images(sess_id, room_id, user):
 
     # Prepare the file for upload
     try:
-        files = {'file': (os.path.basename(image_filename), open(image_filename, "rb"))}
-        data = {'description': 'Here are some pictures from the event!'}
+        files = {'file': (os.path.basename(image_filename), open(image_filename, "rb", "image/jpeg"))}
+        data = {'description': '📷 Here are some pictures from the event!'}
         print("About to send file upload POST request with data:", data)
         print("Headers being used:", HEADERS)
         response_upload = requests.post(upload_url, headers=upload_headers, data=data, files=files)
@@ -430,7 +430,9 @@ def format_data(sess_id, db_result, user, event_type):
         """You are a friendly assistant that formats database responses as a catalog of choices.
         Given a list of activities, output:
         1. On the first line, list the number of results the API returned.
-        3. On the following lines, list each option on its own line and the details.
+        2. On the following lines, list each option on its own line and the details.
+        3. Make any links clickable hyperlinks.
+        4. Take out any excess brackets or asteriks.
         Do not include any extra commentary or headings.
         Make sure to delimit each line with a single (one) newline. Do not add additional unnecessary newline characters.
         Format everything nicely"""
