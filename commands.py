@@ -308,7 +308,7 @@ def send_event_images(sess_id, room_id, user):
 
     # Prepare the file for upload
     try:
-        files = {'file': (os.path.basename(image_filename), open(image_filename, "rb", "image/jpeg"))}
+        files = {'file': (os.path.basename(image_filename), open(image_filename, "rb"), "image/jpeg")}
         data = {'description': '📷 Here are some pictures from the event!'}
         print("About to send file upload POST request with data:", data)
         print("Headers being used:", HEADERS)
