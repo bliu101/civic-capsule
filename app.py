@@ -142,7 +142,7 @@ def main():
         return
     
     if intent_num == '3': 
-        send_event_images(sess_id, room_id, user)
+        send_place_options(user)
         return
 
 
