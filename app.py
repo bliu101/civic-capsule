@@ -216,14 +216,14 @@ def details_complete(room_id, response_text, user, sess_id):
     Called when all necessary details have been provided.
     """
     print("ALL NECESSARY DETAILS!!!!!!!")
-    civic_event = agent_civic_category(response_text) # election, volunteering, community, petitions''''''
-    category = agent_interest_category(response_text)
-
     payload_initial = {
         "channel": f"@{user}",
         "text": "🔍 Gathering details... Hang tight while I search for opportunities!",
     }
     requests.post(ROCKETCHAT_URL, json=payload_initial, headers=HEADERS)
+
+    civic_event = agent_civic_category(response_text) # election, volunteering, community, petitions''''''
+    category = agent_interest_category(response_text)
 
     matching_results = None
     result_ids = None
