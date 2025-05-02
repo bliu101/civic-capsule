@@ -47,6 +47,8 @@ def activity_command(message, user, sess_id, room_id):
     number = parts[2]
     event_title = parts[3] if len(parts) > 3 else None
 
+    if event_title == "None" or not event_title: event_title = "Boston Citizenship Day 2025"
+
     response = generate(
         model = '4o-mini',
         system = 'Give human readable text and be friendly',
