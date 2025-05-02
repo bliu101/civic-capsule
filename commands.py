@@ -63,6 +63,7 @@ def activity_command(message, user, sess_id, room_id):
         lastk=20,
         session_id=sess_id
     )
+    print("RESPONSE IS: ", response)
     response_text = response['response']
     print("PETITION SELECTED: ", response_text)
 
@@ -429,7 +430,7 @@ def send_plan_to_friend(friend_username, username, plan_text):
         print(f"An unexpected error occurred while sending message to {username}: {e}")
         return {"error": f"Unexpected error: {e}"}
 
-def format_data(sess_id, db_result, user, event_type):
+def format_data(sess_id, db_result, user, event_type, result_ids=None):
     system_message = (
         """You are a friendly assistant that formats database responses as a catalog of choices.
         Given a list of activities, output:
@@ -480,5 +481,5 @@ def format_data(sess_id, db_result, user, event_type):
     print('LIST OF PLACES GENERATED')
     print(response_text)
 
-    rocketchat_response = send_place_options(responses_no, user, options, event_type, response_text)
+    rocketchat_response = send_place_options(responses_no, user, options, event_type, response_text, result_ids)
     return jsonify({"status": "redo_search"})

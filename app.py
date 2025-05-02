@@ -249,7 +249,7 @@ def details_complete(room_id, response_text, user, sess_id):
         print("RESULT IDS: ", result_ids)
     
     print("MATCHING RESULTS: ", matching_results)
-    format_data(sess_id=sess_id, db_result=matching_results,user=user, event_type=civic_event)
+    format_data(sess_id=sess_id, db_result=matching_results,user=user, event_type=civic_event, result_ids=result_ids)
 
 @app.errorhandler(404)
 def page_not_found(e):

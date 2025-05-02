@@ -89,7 +89,7 @@ def use_skills(user):
         print(f"Error sending activity suggestions: {e}")
         return {"error": f"Unexpected error: {e}"}
 
-def send_place_options(num, username, options, event_type, text):
+def send_place_options(num, username, options, event_type, text, result_ids=None):
     min_num = 4
     if num < 4:
         min_num = num
@@ -105,6 +105,9 @@ def send_place_options(num, username, options, event_type, text):
     actions = []
     for n in range(1, min_num + 1):
         id = ""
+        if result_ids:
+             id = result_ids[n - 1]
+             
         print('IN THE FOR LOOPS FOR OPTIONS')
         actions.append({
             "type": "button",
