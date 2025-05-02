@@ -41,50 +41,14 @@ def agent_detect_intent(query):
     return intent
 
 def agent_interest_category(message):
+    # old query they chose (local election, petitions, community events, volunteering opportunities):
     print('IN INTEREST CATEGORY AGENT')    
     query = (
         f'''
         The user provided the following request: ***{message}***.
         Based on this request and the uploaded document, find the closest matching civic engagement interest cateogry.
         The category **must** be explicitly listed in the following based on the civic engagement opportunity
-        they chose (local election, petitions, community events, volunteering opportunities):
-
-        If their chosen civic engagement opportunity is "local election":
-            Return "".
-        
-        If their chosen civic engagement opportunity is "volunteering opportunities":
-            The categories are:
-            "Advocacy & Human Rights",
-            "Animals",
-            "Arts & Culture",
-            "Board Development",
-            "Children & Youth",
-            "Community",
-            "Computers & Technology",
-            "Crisis Support",
-            "Disaster Relief",
-            "Education & Literacy",
-            "Emergency & Safety",
-            "Employment",
-            "Environment",
-            "Faith-Based",
-            "Health & Medicine",
-            "Homeless & Housing",
-            "Hunger",
-            "Immigrants & Refugees",
-            "International",
-            "Justice & Legal",
-            "LGBTQ+",
-            "Media & Broadcasting",
-            "People with Disabilities",
-            "Politics",
-            "Race & Ethnicity",
-            "Seniors",
-            "Sports & Recreation",
-            "Veterans & Military",
-            "Families",
-            "Women"
-            Respond **only** with the exact category name from the above. Do not add any extra text.
+        they chose (petitions, community events):
 
         If their chosen civic engagement opportunity is "community events":
             The categories are:

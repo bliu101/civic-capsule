@@ -9,7 +9,7 @@ from zoneinfo import ZoneInfo
 
 from buttons import send_activity_suggestions, send_place_options
 from agents import agent_detect_intent, agent_interest_category, agent_civic_category
-from commands import activity_command, confirm_command, is_valid_username, regenerate_summary, send_plan_to_friend, join_event_command, format_data
+from commands import activity_command, confirm_command, is_valid_username, regenerate_summary, send_plan_to_friend, join_event_command, format_data, send_event_images
 
 from dotenv import load_dotenv
 from pymongo import MongoClient
@@ -23,6 +23,7 @@ client = MongoClient(MONGO_URI)
 db = client[DB_NAME]
 petitions_collection = db["moveon_petitions"]
 community_collection = db["events"]
+citizenship_collection = db["citizenshipday"]
 
 app = Flask(__name__)
 session_id = "CivicCapsule-"
@@ -108,6 +109,14 @@ def main():
         # return jsonify({"text": response_text})
         return jsonify({"status": "show_more_handled"})
     
+    if message.startswith("!photo"):
+        print("========HANDLE_SHOW_MORE START========")
+        send_event_images(sess_id, room_id, user)
+        
+        print("========HANDLE_SHOW_MORE DONE========")
+        # return jsonify({"text": response_text})
+        return jsonify({"status": "show_more_handled"})
+    
     # if message.startswith("!more"):
     #     print("========HANDLE_SHOW_MORE START========")
     #     show_more_options(user, sess_id,)
@@ -140,9 +149,10 @@ def main():
     query = (
         "You are an aide to get civically engaged in the local community, a friendly assistant helping users find civic engagement opportunities "
         "Your goal is to obtain all of the following detail from the user: first, civic engagement opportunities "
-        "The options are local election info, petitions, community events, volunteering opportunities. Second, "
-        "civic engagement interests. ex: environment, civic learning, education, healthcare, social justice. " \
+        "The options are petitions and community events. Second, "
+        "civic engagement interests. " \
         "If the user chose 'community events', the only civic engagement interests are 'civic engagement', 'social good', 'learning and lectures', and 'environment'."
+        "If the user chose 'petitions', prompt the user to send any interest."
         "If any one of these details is missing, ask a clear and direct question for that specific missing detail. "
         "Do not produce a final summary until you have all the required details. "
         "If the user inputs information that they have already given (changed their mind), rewrite over the previous information for that specific detail, but remember the other detials."
@@ -163,7 +173,7 @@ def main():
         """
         You are Civic Capsule, a helpful and friendly civic engagement assistant. 
         You help users discover local events, learn about civic opportunities, and take meaningful action in their community. 
-        You specialize in making local government, voting, and volunteering easy to understand and act on. 
+        You specialize in making local events and petitions easy to understand and act on. 
         You're especially good at surfacing things users can do right now, based on what they care about.
 
         Never assume the user knows civic jargon. Be concise, inclusive, and kind. 
@@ -229,17 +239,17 @@ def details_complete(room_id, response_text, user, sess_id):
         matching_results = list(community_collection.find({
             "category": { "$regex": f"^{category}$", "$options": "i" }
         }).limit(10))
-        result_ids = [event["title"].replace(" ", "") for event in matching_results]
+
+        citizenship_doc = citizenship_collection.find_one()
+        if citizenship_doc:
+            matching_results.insert(0, citizenship_doc)
+
+        result_ids = [event["title"].replace(" ", "") for event in matching_results if "title" in event]
         
         print("RESULT IDS: ", result_ids)
     
     print("MATCHING RESULTS: ", matching_results)
     format_data(sess_id=sess_id, db_result=matching_results,user=user, event_type=civic_event)
-
-        
-
-    # return response_text
-
 
 @app.errorhandler(404)
 def page_not_found(e):

@@ -51,7 +51,7 @@ def activity_command(message, user, sess_id, room_id):
         model = '4o-mini',
         system = 'Give human readable text and be friendly',
         query = (
-            f"""There is a previously generated API list of petitions.
+            f"""There is a previously generated API list of petitions or events (discern which it is from the messages).
             The user selected the #{number} place from that list.
             Please provide a detailed, human-readable summary of this event."""                    
         ),
@@ -168,26 +168,48 @@ def join_event_command(message, user, room_id, sess_id):
     try:
         event_doc = event_signups_collection.find_one({"event_title": event_title})
         if not event_doc:
+            # First person to join
             event_signups_collection.insert_one({
                 "event_title": event_title,
                 "attendees": [{"username": user, "room_id": room_id}]
             })
+            attendees_to_notify = []
         else:
-            # Avoid duplicate usernames
-            existing_usernames = [a["username"] for a in event_doc.get("attendees", [])]
+            # Get current attendees
+            attendees = event_doc.get("attendees", [])
+            existing_usernames = [a["username"] for a in attendees]
+
             if user not in existing_usernames:
                 event_signups_collection.update_one(
                     {"event_title": event_title},
                     {"$addToSet": {"attendees": {"username": user, "room_id": room_id}}}
                 )
+                attendees_to_notify = [a for a in attendees if a["username"] != user]
+            else:
+                print(f"User {user} already registered.")
+                attendees_to_notify = []
 
-        # Send confirmation
+        # Confirmation to the user
         payload = {
             "channel": f"@{user}",
             "text": f"🎉 You’ve been added to '{event_title}'! We’ll keep you in the loop with others going! Add the event to your calendar:"
         }
         requests.post(ROCKETCHAT_URL, json=payload, headers=HEADERS)
+
+        # Send them an ICS file
         create_calendar_event(sess_id, room_id, user)
+
+        # Notify existing attendees
+        for attendee in attendees_to_notify:
+            notify_payload = {
+                "channel": f"@{attendee['username']}",
+                "text": f"👋 @{user} just joined the event **'{event_title}'**! 🎉"
+            }
+            try:
+                requests.post(ROCKETCHAT_URL, json=notify_payload, headers=HEADERS)
+                print(f"Notified {attendee['username']} that {user} joined.")
+            except Exception as e:
+                print(f"Failed to notify {attendee['username']}: {e}")
 
     except Exception as e:
         print(f"Error joining event: {e}")
@@ -269,6 +291,32 @@ def create_calendar_event(sess_id, room_id, user):
         print("File upload response text:", response_upload.text)
         if response_upload.status_code == 200:
             print(f"File {ics_filename} has been sent to {user}.")
+        else:
+            print(f"Failed to send file to {user}. Error: {response_upload.text}")
+    except Exception as e:
+        print(f"An exception occurred during file upload: {e}")
+
+
+def send_event_images(sess_id, room_id, user):
+    print("Sending images")
+    image_filename = "citizenship_day.jpg"
+    
+    # Define the upload URL (same for all uploads)
+    print("Room ID for file upload:", room_id)
+    upload_url = f"{API_BASE_URL}/rooms.upload/{room_id}"
+    print("Constructed upload URL:", upload_url)
+
+    # Prepare the file for upload
+    try:
+        files = {'file': (os.path.basename(image_filename), open(image_filename, "rb"), "image/jpeg")}
+        data = {'description': '📷 Here are some pictures from the event!'}
+        print("About to send file upload POST request with data:", data)
+        print("Headers being used:", HEADERS)
+        response_upload = requests.post(upload_url, headers=upload_headers, data=data, files=files)
+        print("File upload response status code:", response_upload.status_code)
+        print("File upload response text:", response_upload.text)
+        if response_upload.status_code == 200:
+            print(f"File {image_filename} has been sent to {user}.")
         else:
             print(f"Failed to send file to {user}. Error: {response_upload.text}")
     except Exception as e:
@@ -382,7 +430,9 @@ def format_data(sess_id, db_result, user, event_type):
         """You are a friendly assistant that formats database responses as a catalog of choices.
         Given a list of activities, output:
         1. On the first line, list the number of results the API returned.
-        3. On the following lines, list each option on its own line and the details.
+        2. On the following lines, list each option on its own line and the details.
+        3. Make any links clickable hyperlinks.
+        4. Take out any excess brackets or asteriks.
         Do not include any extra commentary or headings.
         Make sure to delimit each line with a single (one) newline. Do not add additional unnecessary newline characters.
         Format everything nicely"""
@@ -410,8 +460,6 @@ def format_data(sess_id, db_result, user, event_type):
     print('nonstripped list')
     print(response_text)
 
-    # parts = response_text.split()
-    # responses_no = int(parts[0])
     lines = response_text.splitlines()
     clean_lines = [line.strip() for line in response_text.splitlines() if line.strip()]
     print('LINES:', lines)
@@ -421,11 +469,12 @@ def format_data(sess_id, db_result, user, event_type):
     if len(lines) > 1:
         print('IN LINES IF STATEMENT')
         options = [opt.strip() for opt in clean_lines[1].split(',')]
+        print(options)
         response_text = "\n".join(lines[2:])
     else:
         response_text = ""
     print('LIST OF PLACES GENERATED')
     print(response_text)
 
-    rocketchat_response = send_place_options(parts=responses_no, options=options, username=user, text=response_text)
+    rocketchat_response = send_place_options(responses_no, user, options, event_type, response_text)
     return jsonify({"status": "redo_search"})
