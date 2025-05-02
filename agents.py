@@ -13,17 +13,19 @@ def agent_detect_intent(query):
                 if the user is greeting or asking 'what do you do?'.
                 If the user is asking what can be done at a civic engagement opportunity, or
                 anything not along the lines of 'what do you do?', return '2'.
+                If the user is asking for a photo or image (specifically asking for a photo or image), return '3'.
                 In all other scenarios, return '2'.
 
-                Be very sparing in returning '1', in most instances you will return '2'
+                Be very sparing in returning '1' or '3', in most instances you will return '2'
             """)
     intent_response = generate(
         model='4o-mini',
         system=(
             "You are an intent detection assistant. "
             "Analyze the following user message and return a single number: "
-            "return '1' if the user is greeting or questioning your purpose, and '2' otherwise." 
-            "Be very sparing in returning '1', in most instances you will return '2'"       
+            "return '1' if the user is greeting or questioning your purpose, '3' if the "
+            "user is asking for a photo or image, and '2' otherwise." 
+            "Be very sparing in returning '1' or '3', in most instances you will return '2'"       
         ),
         query=query,
         temperature=0.0,

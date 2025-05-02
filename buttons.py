@@ -105,14 +105,14 @@ def send_place_options(num, username, text, event_type, result_ids=None):
             "style": "primary"
         })
 
-    if  num > 4:
-        actions.append({
-            "type": "button",
-            "text": "🔽 See more options",
-            "msg": f"!more options",
-            "msg_in_chat_window": True,
-            "style": "primary"
-        })
+    # if  num > 4:
+    #     actions.append({
+    #         "type": "button",
+    #         "text": "🔽 See more options",
+    #         "msg": f"!more options",
+    #         "msg_in_chat_window": True,
+    #         "style": "primary"
+    #     })
 
     payload = {
         "channel": f"@{username}",

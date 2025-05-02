@@ -131,6 +131,11 @@ def main():
     if intent_num == '1':
         send_activity_suggestions(user)
         return
+    
+    if intent_num == '3': 
+        send_place_options(user)
+        return
+
 
     query = (
         "You are an aide to get civically engaged in the local community, a friendly assistant helping users find civic engagement opportunities "
