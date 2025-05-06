@@ -26,7 +26,7 @@ community_collection = db["events"]
 citizenship_collection = db["citizenshipday"]
 
 app = Flask(__name__)
-session_id = "CivicCapsule-"
+session_id = "CivicCapsule2-"
 
 # Rocket.Chat API endpoint
 API_BASE_URL = "https://chat.genaiconnect.net/api/v1"
